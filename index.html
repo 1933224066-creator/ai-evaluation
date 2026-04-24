@@ -1129,7 +1129,7 @@ function buildIssueDetail(data) {
     abilityListEl.querySelectorAll('.issue-ability-item').forEach(el => {
       el.classList.toggle('active', el.dataset.ab === ab);
     });
-    const items = data.filter(r => r.ability === ab);
+    const items = data.filter(r => r.ability === ab).sort((a, b) => (a.status === '未解决' ? 0 : 1) - (b.status === '未解决' ? 0 : 1));
     detailListEl.innerHTML = items.map((r, i) => {
       const sc = STATUS_COLOR[r.status] || '#aaa';
       return '<div class="issue-detail-item">'
