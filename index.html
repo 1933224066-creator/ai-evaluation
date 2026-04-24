@@ -1323,6 +1323,7 @@ function removeFile(i) { pendingFiles.splice(i,1); renderFileList(); }
 function showMsg(msg, type) {
   uploadMsg.textContent = msg;
   uploadMsg.className = 'upload-msg ' + type;
+  uploadMsg.style.display = '';
 }
 
 // Excel date serial → YYYY-MM-DD
