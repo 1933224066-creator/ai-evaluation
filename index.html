@@ -155,6 +155,7 @@
   .charts-row { display: grid; gap: 16px; margin-bottom: 16px; }
   .charts-row-2 { grid-template-columns: 3fr 2fr; }
   .charts-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .charts-row-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
   .chart-card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -557,15 +558,24 @@
     </div>
   </div>
 
-  <!-- Row 3: Gender + Radar + Issue types -->
-  <div class="charts-row charts-row-3">
+  <!-- Row 3: Gender + Age + Radar + Issue types -->
+  <div class="charts-row charts-row-4">
     <div class="chart-card">
       <div class="chart-header">
         <div class="chart-title">性别分布</div>
-        <div class="chart-sub">92 条记录中男女比例</div>
+        <div class="chart-sub" id="gender-sub">90 条记录中男女比例</div>
       </div>
       <div class="chart-container" style="height:200px">
         <canvas id="genderPie"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">患者年龄分布</div>
+        <div class="chart-sub">按年龄段统计病例数量</div>
+      </div>
+      <div class="chart-container" style="height:200px">
+        <canvas id="ageBar"></canvas>
       </div>
     </div>
     <div class="chart-card">
@@ -755,7 +765,7 @@ Chart.defaults.font.family = "Inter, -apple-system, 'PingFang SC', sans-serif";
 Chart.defaults.font.size = 12;
 
 // ════════ CHART INSTANCES ════════
-let chartStackedBar, chartDonut, chartCity, chartGender, chartRadar;
+let chartStackedBar, chartDonut, chartCity, chartGender, chartRadar, chartAge;
 
 // ════════ STATS HELPERS ════════
 function computeStats(records) {
@@ -791,6 +801,29 @@ function computeGender(records) {
   const f = records.filter(r=>r.gender==='女').length;
   const m = records.filter(r=>r.gender==='男').length;
   return [f, m];
+}
+
+function computeAgeGroups(records) {
+  const groups = [
+    { label: '0-10岁',  min:0,  max:10  },
+    { label: '11-20岁', min:11, max:20  },
+    { label: '21-30岁', min:21, max:30  },
+    { label: '31-40岁', min:31, max:40  },
+    { label: '41-50岁', min:41, max:50  },
+    { label: '51-60岁', min:51, max:60  },
+    { label: '61-70岁', min:61, max:70  },
+    { label: '71-80岁', min:71, max:80  },
+    { label: '81岁以上', min:81, max:999 },
+  ];
+  groups.forEach(g => {
+    g.count = records.filter(r => {
+      const m = String(r.age||'').match(/\d+/);
+      if (!m) return false;
+      const age = parseInt(m[0]);
+      return age >= g.min && age <= g.max;
+    }).length;
+  });
+  return groups;
 }
 
 function computeIssueCategories(records) {
@@ -916,6 +949,37 @@ function buildGenderPie(records) {
   });
 }
 
+function buildAgeBar(records) {
+  if(chartAge) chartAge.destroy();
+  const groups = computeAgeGroups(records);
+  const maxCount = Math.max(...groups.map(g=>g.count), 1);
+  chartAge = new Chart(document.getElementById('ageBar'), {
+    type:'bar',
+    data:{
+      labels: groups.map(g=>g.label),
+      datasets:[{
+        label:'病例数',
+        data: groups.map(g=>g.count),
+        backgroundColor: groups.map(g => {
+          const ratio = g.count / maxCount;
+          return `rgba(78,144,254,${0.35 + ratio*0.6})`;
+        }),
+        borderRadius:4, borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label:(ctx)=>`${ctx.raw} 例` } }
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{font:{size:10}} },
+        y:{ grid:{color:'rgba(0,0,0,0.06)'}, ticks:{stepSize:5, font:{size:11}} }
+      }
+    }
+  });
+}
+
 function buildRadar(records) {
   if(chartRadar) chartRadar.destroy();
   const abMap = computeAbilityStatus(records);
@@ -967,7 +1031,10 @@ function refreshDashboard(records) {
   buildDonut(records);
   buildCityBar(records);
   buildGenderPie(records);
+  buildAgeBar(records);
   buildRadar(records);
+  const genderSub = document.getElementById('gender-sub');
+  if(genderSub) genderSub.textContent = `${records.length} 条记录中男女比例`;
   buildIssueList(records);
   // update header stat text
   const sub = document.querySelector('.chart-sub[data-donut]');
