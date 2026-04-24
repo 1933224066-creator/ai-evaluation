@@ -513,7 +513,7 @@
       <div class="kpi-label">待解决</div>
       <div class="kpi-value" id="kpi-pending">22</div>
       <div class="kpi-sub" id="kpi-sub-pending">未解决 18 · 解决中 4</div>
-      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:24.4%;background:#e08c00" id="bar-pending"></div></div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:24.4%;background:#f97316" id="bar-pending"></div></div>
     </div>
     <div class="kpi-card purple">
       <div class="kpi-label">有效解决率</div>
@@ -744,7 +744,7 @@ let RAW_DATA = [{"seq":"1","ability":"CT肺结节","orig_code":"130042723","plat
 
 // ════════ CONSTANTS ════════
 const STATUS_COLOR = {
-  '已解决': '#1a6fdb', '未解决': '#e03131', '解决中': '#60a5fa',
+  '已解决': '#1a6fdb', '未解决': '#f97316', '解决中': '#60a5fa',
   '无需解决': '#5e7aa0', '无法解决': '#6741d9'
 };
 const ABILITIES_ORDER = [
@@ -899,7 +899,7 @@ function buildDonut(records) {
     data: {
       labels: ['已解决','未解决','解决中','无需解决','无法解决'],
       datasets: [{ data:[s.resolved,s.unresolved,s.processing,s.noNeed,s.cantSolve],
-        backgroundColor:['#1a6fdb','#e03131','#60a5fa','#5e7aa0','#6741d9'],
+        backgroundColor:['#1a6fdb','#f97316','#60a5fa','#5e7aa0','#6741d9'],
         borderWidth:0, hoverOffset:8 }]
     },
     options: {
