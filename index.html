@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AISaaS 辅助能力评估分析报告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --border: #e8eaed;
+    --border2: #f0f2f5;
+    --text: #1f2329;
+    --text2: #646a73;
+    --text3: #adb0b8;
+    --accent: #4e90fe;
+    --accent2: #2d73e8;
+    --blue: #4e90fe;
+    --blue-light: #EBF3FF;
+    --green: #19be6b;
+    --green-bg: #f0faf5;
+    --green-ring: #a8e6c8;
+    --red: #ed4014;
+    --red-bg: #fff2f0;
+    --red-ring: #ffbcb2;
+    --amber: #f90;
+    --amber-bg: #fff8e6;
+    --amber-ring: #ffd980;
+    --gray: #8f959e;
+    --gray-bg: #f7f8fa;
+    --gray-ring: #dcdee2;
+    --purple: #7c3aed;
+    --purple-bg: #f5f3ff;
+    --purple-ring: #ddd6fe;
+    --radius: 6px;
+    --content-width: 1200px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: #1c2333;
+    border-bottom: none;
+    padding: 0 40px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .header-logo {
+    width: 26px; height: 26px;
+    background: var(--accent);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 11px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .header-left h1 { font-size: 14px; font-weight: 500; color: #ffffff; }
+  .header-left p { display: none; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .header-meta { font-size: 12px; color: rgba(255,255,255,0.55); }
+  .header-meta strong { color: rgba(255,255,255,0.85); font-weight: 400; }
+  .header-tag {
+    background: rgba(78,144,254,0.18);
+    color: #7fb8ff;
+    font-size: 11.5px;
+    font-weight: 400;
+    padding: 2px 10px;
+    border-radius: 2px;
+    border: 1px solid rgba(78,144,254,0.3);
+  }
+
+  .header-nav {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    height: 100%;
+    margin: 0 24px;
+  }
+  .header-tab {
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .header-tab:hover { color: rgba(255,255,255,0.85); }
+  .header-tab.active { color: #fff; border-bottom-color: var(--accent); font-weight: 500; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .main {
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: 32px 40px 60px;
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  /* ── KPI Cards ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 24px 20px;
+    position: relative;
+    transition: box-shadow 0.15s;
+  }
+  .kpi-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+  .kpi-label { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
+  .kpi-value { font-size: 32px; font-weight: 600; line-height: 1; letter-spacing: -0.5px; margin-bottom: 10px; color: var(--text); }
+  .kpi-card.blue   .kpi-value { color: var(--accent); }
+  .kpi-card.green  .kpi-value { color: var(--green); }
+  .kpi-card.red    .kpi-value { color: var(--amber); }
+  .kpi-card.purple .kpi-value { color: var(--accent); }
+  .kpi-sub { font-size: 12px; color: var(--text3); }
+  .kpi-bar { height: 3px; background: var(--border2); border-radius: 99px; margin-top: 18px; overflow: hidden; }
+  .kpi-bar-fill { height: 100%; border-radius: 99px; }
+
+  /* ── Chart Cards ── */
+  .charts-row { display: grid; gap: 16px; margin-bottom: 16px; }
+  .charts-row-2 { grid-template-columns: 3fr 2fr; }
+  .charts-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 28px 28px;
+  }
+  .chart-header { margin-bottom: 20px; }
+  .chart-title { font-size: 14px; font-weight: 500; color: var(--text); }
+  .chart-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  .chart-container { position: relative; }
+
+  /* ── Issue list ── */
+  .issue-list { list-style: none; }
+  .issue-item {
+    display: flex;
+    align-items: center;
+    padding: 9px 0;
+    gap: 10px;
+    border-bottom: 1px solid var(--border2);
+  }
+  .issue-item:last-child { border-bottom: none; }
+  .issue-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .issue-name { flex: 1; font-size: 12px; color: var(--text); }
+  .issue-bar-bg { width: 80px; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; flex-shrink: 0; }
+  .issue-bar-fill { height: 100%; border-radius: 99px; }
+  .issue-count { width: 22px; text-align: right; font-size: 12px; font-weight: 600; color: var(--text); }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 7px;
+    border-radius: 2px;
+    font-size: 11px;
+    font-weight: 400;
+    white-space: nowrap;
+  }
+  .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .badge-resolved   { background: var(--green-bg);  color: var(--green);  }
+  .badge-resolved::before   { background: var(--green); }
+  .badge-unresolved { background: var(--red-bg);    color: var(--red);    }
+  .badge-unresolved::before { background: var(--red); }
+  .badge-processing { background: var(--blue-light); color: var(--blue);  }
+  .badge-processing::before { background: var(--blue); }
+  .badge-notneed    { background: var(--gray-bg);   color: var(--gray);   }
+  .badge-notneed::before    { background: #bbb; }
+  .badge-cantsolve  { background: var(--purple-bg); color: var(--purple); }
+  .badge-cantsolve::before  { background: var(--purple); }
+  .badge-high       { background: var(--red-bg);    color: var(--red);    }
+  .badge-high::before       { background: var(--red); }
+
+  /* ── Insight cards ── */
+  .insight-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .insight-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    display: flex;
+    gap: 16px;
+  }
+  .insight-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .insight-card.ok     .insight-icon { background: var(--green-bg); }
+  .insight-card.warn   .insight-icon { background: var(--amber-bg); }
+  .insight-card.danger .insight-icon { background: var(--red-bg); }
+  .insight-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .insight-text  { font-size: 12px; color: var(--text2); line-height: 1.7; }
+  .insight-highlight { color: var(--accent); font-weight: 500; }
+  .insight-card.warn   .insight-highlight { color: var(--amber); }
+  .insight-card.danger .insight-highlight { color: var(--red); }
+
+  /* ── Table ── */
+  .table-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .table-toolbar {
+    display: flex;
+    gap: 8px;
+    padding: 14px 20px;
+    flex-wrap: wrap;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--gray-bg);
+  }
+  .table-toolbar h2 { font-size: 13px; font-weight: 500; flex: 1; color: var(--text); }
+  .search-wrap { position: relative; }
+  .search-wrap svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+  .search-input {
+    background: #fff;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px 5px 28px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    width: 190px;
+    font-family: inherit;
+    transition: border-color 0.12s;
+  }
+  .search-input::placeholder { color: var(--text3); }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+  .filter-select {
+    background: #fff;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 8px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .filter-select:focus { outline: none; border-color: var(--accent); }
+  .table-count { font-size: 12px; color: var(--text3); white-space: nowrap; }
+  .table-scroll { overflow-x: auto; max-height: 460px; overflow-y: auto; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th {
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    background: var(--gray-bg);
+    z-index: 1;
+  }
+  .data-table td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border2);
+    vertical-align: middle;
+    color: var(--text);
+  }
+  .data-table tbody tr:hover td { background: #f0f5ff; }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .td-issue { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text2); }
+  .td-code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; color: var(--text2); background: var(--gray-bg); padding: 1px 5px; border-radius: 2px; white-space: nowrap; border: 1px solid var(--border); }
+  .td-ability { white-space: nowrap; }
+  .ability-pill {
+    display: inline-block;
+    background: var(--blue-light);
+    color: var(--accent);
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  /* ── Pagination ── */
+  .pagination {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    justify-content: center;
+    background: var(--gray-bg);
+  }
+  .page-btn {
+    background: #fff;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    transition: border-color 0.1s, color 0.1s;
+    min-width: 30px;
+    text-align: center;
+  }
+  .page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .page-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 16px;
+    color: var(--text3);
+    font-size: 11.5px;
+    border-top: 1px solid var(--border);
+    background: var(--card);
+  }
+
+  /* ── Upload FAB ── */
+  .upload-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+  }
+  .upload-panel {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06);
+    width: 360px;
+    overflow: hidden;
+    transform: translateY(10px) scale(0.98);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.18s cubic-bezier(0.34,1.56,0.64,1);
+    transform-origin: bottom right;
+  }
+  .upload-panel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: all; }
+  .upload-panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--gray-bg);
+  }
+  .upload-panel-title { font-size: 13px; font-weight: 500; color: var(--text); }
+  .upload-panel-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .upload-close {
+    width: 24px; height: 24px;
+    border-radius: 3px; border: none;
+    background: var(--border);
+    color: var(--text2);
+    cursor: pointer; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .upload-close:hover { background: var(--gray-ring); }
+  .upload-drop-zone {
+    margin: 12px;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    padding: 18px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.12s, background 0.12s;
+    background: var(--gray-bg);
+  }
+  .upload-drop-zone:hover, .upload-drop-zone.drag-over { border-color: var(--accent); background: var(--blue-light); }
+  .upload-drop-icon { font-size: 22px; margin-bottom: 5px; }
+  .upload-drop-text { font-size: 12.5px; font-weight: 500; color: var(--text); }
+  .upload-drop-hint { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .upload-drop-hint span { color: var(--accent); }
+  #fileInput { display: none; }
+  .upload-file-list { margin: 0 12px 10px; display: flex; flex-direction: column; gap: 5px; max-height: 150px; overflow-y: auto; }
+  .upload-file-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 3px; border: 1px solid var(--border); background: #fff; font-size: 12px; }
+  .file-icon { font-size: 14px; flex-shrink: 0; }
+  .file-info { flex: 1; min-width: 0; }
+  .file-name { font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-size { font-size: 10.5px; color: var(--text3); }
+  .file-status { flex-shrink: 0; font-size: 12px; }
+  .upload-actions { padding: 0 12px 12px; display: flex; gap: 8px; }
+  .upload-btn-cancel { flex: 1; padding: 6px; border-radius: 3px; border: 1px solid var(--border); background: #fff; color: var(--text2); font-size: 12px; cursor: pointer; font-family: inherit; }
+  .upload-btn-cancel:hover { border-color: var(--text2); }
+  .upload-btn-parse { flex: 2; padding: 6px; border-radius: 3px; border: none; background: var(--accent); color: #fff; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .upload-btn-parse:hover:not(:disabled) { background: var(--accent2); }
+  .upload-btn-parse:disabled { opacity: 0.4; cursor: not-allowed; }
+  .upload-msg { margin: 0 12px 10px; font-size: 12px; padding: 7px 10px; border-radius: 3px; display: none; }
+  .upload-msg.success { display: block; background: var(--green-bg); color: var(--green); border: 1px solid var(--green-ring); }
+  .upload-msg.error   { display: block; background: var(--red-bg);   color: var(--red);   border: 1px solid var(--red-ring); }
+  .fab-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 7px;
+    box-shadow: 0 2px 8px rgba(78,144,254,0.4);
+    transition: background 0.12s, box-shadow 0.12s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .fab-btn:hover { background: var(--accent2); box-shadow: 0 4px 12px rgba(78,144,254,0.5); }
+  .fab-btn svg { flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+</style>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">AI</div>
+    <div>
+      <h1>AISaaS 辅助能力评估报告</h1>
+      <p>问题跟踪与解决状态全景分析 · 安徽省医疗AI辅诊系统</p>
+    </div>
+  </div>
+  <div class="header-nav">
+    <a class="header-tab active" onclick="switchTab('ability')">AI辅诊能力评估</a>
+    <a class="header-tab" onclick="switchTab('platform')">平台问题分析</a>
+  </div>
+  <div class="header-right">
+    <div class="header-meta">
+      评估日期 <strong>2026-04-21 ~ 2026-04-23</strong><br>
+      数据来源 <strong>AISaaS辅助能力评估-问题跟踪表</strong>
+    </div>
+    <div class="header-tag">9 种 CT 能力</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="tab-panel active" id="panel-ability">
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">数据集</div>
+      <div class="kpi-value" id="kpi-dataset">90</div>
+      <div class="kpi-sub">覆盖 9 种 CT 辅诊能力</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:var(--gray)"></div></div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">问题总数</div>
+      <div class="kpi-value" id="kpi-total">88</div>
+      <div class="kpi-sub">评估过程中数据问题</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:#1890FF"></div></div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">已解决</div>
+      <div class="kpi-value" id="kpi-resolved">57</div>
+      <div class="kpi-sub">解决率 63.3%</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:63.3%;background:#36CFC9" id="bar-resolved"></div></div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-label">无需解决</div>
+      <div class="kpi-value" id="kpi-noneed">11</div>
+      <div class="kpi-sub">数据本身问题，不纳入统计</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:12.2%;background:#5A6874" id="bar-noneed"></div></div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">待解决</div>
+      <div class="kpi-value" id="kpi-pending">22</div>
+      <div class="kpi-sub" id="kpi-sub-pending">未解决 18 · 解决中 4</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:24.4%;background:#FA8C16" id="bar-pending"></div></div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">有效解决率</div>
+      <div class="kpi-value" id="kpi-rate">72%</div>
+      <div class="kpi-sub" id="kpi-sub-rate">57 ÷ (90 − 11) ≈ 72.2%</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:72%;background:#722ED1" id="bar-rate"></div></div>
+    </div>
+  </div>
+
+  <!-- Row 1: Stacked Bar + Donut -->
+  <div class="charts-row charts-row-2">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">各辅诊能力 · 问题解决状态分布</div>
+        <div class="chart-sub">按 CT 检查能力分类，展示各状态数量堆叠对比</div>
+      </div>
+      <div class="chart-container" style="height:280px">
+        <canvas id="stackedBar"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">整体解决状态分布</div>
+        <div class="chart-sub">全部 92 条记录按状态占比</div>
+      </div>
+      <div class="chart-container" style="height:280px">
+        <canvas id="statusDonut"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: City -->
+  <div class="charts-row" style="grid-template-columns:1fr">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">病例来源地市分布</div>
+        <div class="chart-sub">安徽省各地市病例数量分布（全部）</div>
+      </div>
+      <div class="chart-container" style="height:340px">
+        <canvas id="cityBar"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Gender + Radar + Issue types -->
+  <div class="charts-row charts-row-3">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">性别分布</div>
+        <div class="chart-sub">92 条记录中男女比例</div>
+      </div>
+      <div class="chart-container" style="height:200px">
+        <canvas id="genderPie"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">能力覆盖 vs 解决情况</div>
+        <div class="chart-sub">各 CT 辅诊能力测试量与已解决量雷达对比</div>
+      </div>
+      <div class="chart-container" style="height:200px">
+        <canvas id="abilityCount"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">主要问题类型</div>
+        <div class="chart-sub">按问题描述关键词聚类分析</div>
+      </div>
+      <ul class="issue-list" id="issueList"></ul>
+    </div>
+  </div>
+
+  <!-- Insights -->
+  <div class="insight-grid">
+    <div class="insight-card ok">
+      <div class="insight-icon">✅</div>
+      <div class="insight-body">
+        <div class="insight-title">高效解决能力</div>
+        <div class="insight-text">
+          <span class="insight-highlight">CT肺结节</span>全部 10 条均已解决，解决率 <span class="insight-highlight">100%</span>。CT肋骨骨折解决率 <span class="insight-highlight">90%</span>，上传 / 配置类问题响应迅速。
+        </div>
+      </div>
+    </div>
+    <div class="insight-card warn">
+      <div class="insight-icon">⚠️</div>
+      <div class="insight-body">
+        <div class="insight-title">待关注能力</div>
+        <div class="insight-text">
+          <span class="insight-highlight">CT-头颈CTA</span> 未解决率 <span class="insight-highlight">60%</span>（6/10），主因"辅诊用时较长"。<span class="insight-highlight">CT-脑灌注CTP</span> 无需解决 6 条均因未传 CTP 序列。
+        </div>
+      </div>
+    </div>
+    <div class="insight-card danger">
+      <div class="insight-icon">🔴</div>
+      <div class="insight-body">
+        <div class="insight-title">核心问题根因</div>
+        <div class="insight-text">
+          <span class="insight-highlight">BodyPartExamined 过滤</span>是脑出血 / ASPECT 评分主要根因，已批量修复。<span class="insight-highlight">tag 值缺失</span>导致冠脉 CTA / 肺炎多次识别错误，需完善预处理。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="table-section">
+    <div class="table-toolbar">
+      <h2>全量数据明细</h2>
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><path d="m15 15 4 4"/></svg>
+        <input type="text" class="search-input" id="searchInput" placeholder="搜索问题 / 编码 / 地市…">
+      </div>
+      <select class="filter-select" id="abilityFilter">
+        <option value="">全部能力</option>
+        <option>CT肺结节</option>
+        <option>CT肋骨骨折</option>
+        <option>CT-肺炎</option>
+        <option>CT-冠脉CTA</option>
+        <option>CT-头颈CTA</option>
+        <option>CT-脑灌注CTP</option>
+        <option>CT-脑出血</option>
+        <option>CT-ASPECT评分</option>
+        <option>CT-门控钙化积分</option>
+      </select>
+      <select class="filter-select" id="statusFilter">
+        <option value="">全部状态</option>
+        <option>已解决</option>
+        <option>未解决</option>
+        <option>解决中</option>
+        <option>无需解决</option>
+        <option>无法解决</option>
+      </select>
+      <select class="filter-select" id="proposerFilter">
+        <option value="">全部提出人</option>
+        <option>廖婷婷</option>
+        <option>尹俊雅</option>
+        <option>陶志强</option>
+      </select>
+      <span class="table-count" id="tableCount"></span>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>序号</th>
+            <th>能力</th>
+            <th>原始编码</th>
+            <th>性别</th>
+            <th>年龄</th>
+            <th>地市</th>
+            <th>辅诊用时</th>
+            <th>状态</th>
+            <th>提出人</th>
+            <th>优先级</th>
+            <th>发现时间</th>
+            <th>解决时间</th>
+            <th>问题描述</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  </div><!-- /panel-ability -->
+
+  <div class="tab-panel" id="panel-platform">
+    <div style="display:flex;align-items:center;justify-content:center;height:320px;flex-direction:column;gap:12px;color:var(--text3);">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      <div style="font-size:14px;color:var(--text2);font-weight:500;">平台问题分析</div>
+      <div style="font-size:12px;">模块建设中，敬请期待</div>
+    </div>
+  </div><!-- /panel-platform -->
+
+</div>
+
+<div class="footer">
+  AISaaS 辅助能力评估分析报告 · 评估周期 2026-04-21 至 2026-04-23 · 共覆盖安徽省 20+ 地市医院 · 9种CT辅诊能力
+</div>
+
+<!-- Upload FAB -->
+<div class="upload-fab">
+  <div class="upload-panel" id="uploadPanel">
+    <div class="upload-panel-header">
+      <div>
+        <div class="upload-panel-title">上传数据文件</div>
+        <div class="upload-panel-sub">支持 Excel(.xlsx/.xls) 和 Word(.docx)，可多选</div>
+      </div>
+      <button class="upload-close" id="uploadClose">✕</button>
+    </div>
+    <div class="upload-drop-zone" id="dropZone">
+      <div class="upload-drop-icon">📂</div>
+      <div class="upload-drop-text">拖拽文件到此处，或点击选择</div>
+      <div class="upload-drop-hint">支持 <span>.xlsx</span> <span>.xls</span> <span>.docx</span>，可同时选多个文件</div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.docx,.doc" multiple>
+    </div>
+    <div class="upload-file-list" id="uploadFileList"></div>
+    <div class="upload-msg" id="uploadMsg"></div>
+    <div class="upload-actions">
+      <button class="upload-btn-cancel" id="uploadCancelBtn">取消</button>
+      <button class="upload-btn-parse" id="parseBtn" disabled>开始解析</button>
+    </div>
+  </div>
+  <button class="fab-btn" id="fabBtn">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    上传数据
+  </button>
+</div>
+
+<script>
+// ════════ DATA ════════
+let RAW_DATA = [{"seq":"1","ability":"CT肺结节","orig_code":"130042723","platform_code":"130042723","gender":"女","age":"69岁","city":"合肥市","duration":"【0422】骨折：32分38秒 肺结节：- 【0423】肺炎：1天45分38秒 肺结节：1天45分38秒 骨折：1天45分38秒 aspects：1天45分38秒","issue":"1、上传后增加了tag值，还是无法被成功识别到 / 2、识别成tx门控钙化能力-已解决 / 3、骨折状态已识别 / 4、肺结节状态图像传输中 / 同一个病例若命中同一产品线的多个能力，首次触发后，后续同线请求只回调首次命中的能力，已解决，需要重新上传 / 5、详情页点击【骨折】工具栏局部图一直在转圈圈 / 6、这一个病例同时过了4个能力，aspect的显示识别失败，但是“查看AI结果”也是高亮可点击的，点开是其他3个能力的结果","proposer":"廖婷婷","status":"已解决","resolver":"影联,推想","priority":"高","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"2","ability":"CT肺结节","orig_code":"20260418000668","platform_code":"20260418000541","gender":"男","age":"40岁","city":"芜湖市","duration":"【0422】肺结节：7分 【0423】肺结节：1天24分","issue":"1、一直无法上传到系统中 / 2、第二次失败，没有tag值，重新配置，已解决","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"3","ability":"CT肺结节","orig_code":"CT27286","platform_code":"CT27286","gender":"女","age":"39岁","city":"淮南市","duration":"肺结节：5分55秒","issue":"1、一直无法上传到系统中 / 服务断电，无法上传，已解决","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"4","ability":"CT肺结节","orig_code":"172065584","platform_code":"172065584","gender":"男","age":"52岁","city":"安庆市","duration":"肺结节：37分13秒 骨折：37分13秒","issue":"1、一直无法上传到系统中，已解决","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"5","ability":"CT肺结节","orig_code":"15028761","platform_code":"001201488T","gender":"女","age":"54岁","city":"安庆市","duration":"肺结节：14小时21分29秒","issue":"1、上传后增加了tag值，还是无法被成功识别到","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-21","resolve_date":"2026-04-21","note":""},{"seq":"6","ability":"CT肺结节","orig_code":"CT128022","platform_code":"10101127","gender":"男","age":"46岁","city":"黄山市","duration":"肺结节：6分3秒","issue":"无tag值，上传有空格，重新上传，已解决","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"7","ability":"CT肺结节","orig_code":"CT127627","platform_code":"10099451","gender":"男","age":"32岁","city":"黄山市","duration":"肺结节：5分26秒","issue":"","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"8","ability":"CT肺结节","orig_code":"CT20260421129","platform_code":"0000065842","gender":"女","age":"38岁","city":"阜阳市","duration":"肺结节：7分25秒 骨折：7分25秒","issue":"","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"9","ability":"CT肺结节","orig_code":"CT20260421038","platform_code":"0000065517","gender":"男","age":"72岁","city":"阜阳市","duration":"肺结节：7分25秒 骨折：7分25秒","issue":"","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"10","ability":"CT肺结节","orig_code":"ZCT32434","platform_code":"ZCT32434","gender":"女","age":"55岁","city":"六安市","duration":"肺结节：10分2秒 骨折：10分2秒","issue":"","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"11","ability":"CT肋骨骨折","orig_code":"CT0386433","platform_code":"CT0386433","gender":"男","age":"48岁","city":"铜陵市","duration":"","issue":"图像传输中，一直没有返回结果。图像被过滤，原因是图像传输后缺图，只有2个1张的序列","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-21","resolve_date":"2026-04-23","note":""},{"seq":"12","ability":"CT肋骨骨折","orig_code":"CT20260415105","platform_code":"0002469989","gender":"女","age":"44岁","city":"宣城市","duration":"4分32秒","issue":"骨折报告打开是空白","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-21","resolve_date":"2026-04-23","note":""},{"seq":"13","ability":"CT肋骨骨折","orig_code":"CT2604150222","platform_code":"CT2604150222","gender":"女","age":"58岁","city":"宣城市","duration":"4分24秒","issue":"骨折报告打开是空白","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-21","resolve_date":"2026-04-23","note":""},{"seq":"14","ability":"CT肋骨骨折","orig_code":"CT2604150144","platform_code":"CT2604150144","gender":"女","age":"54岁","city":"宣城市","duration":"1分36秒","issue":"骨折报告打开是空白","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-21","resolve_date":"2026-04-23","note":""},{"seq":"15","ability":"CT肋骨骨折","orig_code":"CT2604150095","platform_code":"CT2604150095","gender":"女","age":"68岁","city":"宣城市","duration":"1分31秒","issue":"骨折报告打开是空白","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-21","resolve_date":"2026-04-23","note":""},{"seq":"16","ability":"CT肋骨骨折","orig_code":"CT20260201118","platform_code":"0000018425","gender":"男","age":"24岁","city":"马鞍山市","duration":"4分35秒","issue":"骨折报告打开是空白","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-21","resolve_date":"2026-04-23","note":""},{"seq":"17","ability":"CT肋骨骨折","orig_code":"14817272","platform_code":"001079951T","gender":"女","age":"67岁","city":"安庆市","duration":"4分38秒","issue":"骨折报告打开是空白","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-21","resolve_date":"2026-04-23","note":""},{"seq":"18","ability":"CT肋骨骨折","orig_code":"CT2602010146","platform_code":"CT2602010146","gender":"男","age":"41岁","city":"宣城市","duration":"4分29秒","issue":"骨折报告打开是空白","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-21","resolve_date":"2026-04-23","note":""},{"seq":"19","ability":"CT肋骨骨折","orig_code":"CT20260201086","platform_code":"0000441550","gender":"女","age":"68岁","city":"芜湖市","duration":"2分58秒","issue":"骨折报告打开是空白","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-21","resolve_date":"2026-04-23","note":""},{"seq":"20","ability":"CT肋骨骨折","orig_code":"CT20260418259","platform_code":"CT20260418259","gender":"女","age":"14岁","city":"合肥市","duration":"4分47秒","issue":"骨折报告打开是空白","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-21","resolve_date":"2026-04-23","note":""},{"seq":"21","ability":"CT-肺炎","orig_code":"CT20260308261","platform_code":"0000694975","gender":"女","age":"7岁","city":"阜阳市","duration":"肺炎：3分57秒","issue":"","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"22","ability":"CT-肺炎","orig_code":"5414953","platform_code":"CT2605070","gender":"女","age":"89岁","city":"合肥市","duration":"【0422】无结果 【0423】脑灌注 1天1小时15分5秒","issue":"此数据没有tag值，需要重新换数据 / 识别成了脑灌注，状态是识别失败 / 之前没满足 BodyPartExamined的限制，导致被过滤了。 / 我把 BodyPartExamined = NECK，也加进了脑灌注的","proposer":"廖婷婷","status":"已解决","resolver":"推想","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"23","ability":"CT-肺炎","orig_code":"CT260308100","platform_code":"CT260308100","gender":"女","age":"59岁","city":"淮北市","duration":"【042】骨折： 肺炎： 肺结节：5分55秒 【0423】aspects：8小时9分55秒 骨折：8小时9分55秒 肺结节：8小时9分55秒 肺炎：8小时9分55秒","issue":"1、识别成肺结节、骨折、肺炎 / 都属于胸部的能力，但状态只有一个是已识别，其他的都是图像传输中 / 2、骨折：点击【报告】打开是空白 / 3、能正常查看，修改了看报告的路径","proposer":"廖婷婷","status":"已解决","resolver":"推想","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":"=DISPIMG(\"ID_2D7358C9ED3441938E24E5EFB40A1FBF\",1)"},{"seq":"24","ability":"CT-肺炎","orig_code":"C20260308191","platform_code":"C20260308191","gender":"男","age":"83岁","city":"宿州市","duration":"骨折：7分43秒 肺炎：7分43秒 肺结节：7分43秒","issue":"1、识别成肺炎、肺结节、肺炎且状态都是已识别","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"25","ability":"CT-肺炎","orig_code":"F20260308066","platform_code":"F20260308066","gender":"男","age":"77岁","city":"黄山市","duration":"【0422】肺炎： 肺结节：10分21秒 【0423】肺结节：3小时11分58秒 肺炎：3小时11分58秒","issue":"1、第一次识别成肺结节；又重新跑了一遍可以了 / 肺炎状态是图像传输中， / 2、和130042723原因一致，需删除重新上传","proposer":"廖婷婷","status":"已解决","resolver":"影联","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"26","ability":"CT-肺炎","orig_code":"20260308387","platform_code":"20260308387","gender":"男","age":"64岁","city":"阜阳市","duration":"","issue":"1、识别成肺炎、肺结节、骨折 / 状态都是图像传输中 / 2、删除需重新上传 / 状态为：识别失败 / 两个胸肺序列都是5mm的厚层序列。 / 我们胸肺，分薄层(0~3mm), 和厚层(3~8mm).  / 肺结节+肺炎+骨折，都仅针对薄层序列。","proposer":"廖婷婷","status":"已解决","resolver":"推想","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"27","ability":"CT-肺炎","orig_code":"k48173","platform_code":"20260308000470","gender":"女","age":"27岁","city":"淮北市","duration":"","issue":"1、有tag值，依旧识别错误 / 2、删除需重新上传","proposer":"廖婷婷","status":"已解决","resolver":"影联","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"28","ability":"CT-肺炎","orig_code":"ZCT-3211652","platform_code":"ZCT-3211652","gender":"女","age":"32岁","city":"合肥市","duration":"【0422】骨折：6分28秒 肺结节：6分28秒 【0423】骨折：29分27秒 肺结节：29分27秒","issue":"1、识别成骨折、肺结节，肺炎没有tag值 / 重新上传还是没有肺炎 / 2、重新上传数据，还是没识别到肺炎；肺炎里应该是没有对应tag / 已配置tag值，重新上传了","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"29","ability":"CT-肺炎","orig_code":"CT20260305051","platform_code":"0000039015","gender":"女","age":"34岁","city":"阜阳市","duration":"骨折： 肺炎： 肺结节：4分42秒","issue":"1、识别成肺结节；增加了tag值可以了 / 肺结节状态是已识别；骨折和肺炎都是图像传输中","proposer":"廖婷婷","status":"解决中","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"30","ability":"CT-肺炎","orig_code":"315887","platform_code":"315887","gender":"男","age":"48岁","city":"阜阳市","duration":"","issue":"2、第一次上传成功 / 肺炎和肺结节状态都是图像传输中 / 3、删除重新上传了","proposer":"廖婷婷","status":"解决中","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"31","ability":"CT-冠脉CTA","orig_code":"CT2604920","platform_code":"60264569","gender":"男","age":"59岁","city":"阜阳市","duration":"1分30秒","issue":"1、识别成了tx门控钙化 / 2、删除，重新上传数据，没有对应的tag值 / 状态：图像传输中","proposer":"廖婷婷","status":"解决中","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"32","ability":"CT-冠脉CTA","orig_code":"20260131267","platform_code":"20260131267","gender":"男","age":"70岁","city":"宿州市","duration":"3分30秒","issue":"1、识别成tx门控钙化 / 2、增加tag值，重新上传 / 状态：图像传输中","proposer":"廖婷婷","status":"解决中","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"33","ability":"CT-冠脉CTA","orig_code":"547892","platform_code":"547892","gender":"男","age":"69岁","city":"芜湖市","duration":"-","issue":"1、识别成脑灌注 / 识别失败 / 2、没有对应的tag值，删除重新上传 / 状态：已识别","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"34","ability":"CT-冠脉CTA","orig_code":"CT20260131117","platform_code":"0000811254","gender":"女","age":"66岁","city":"安庆市","duration":"2分42秒","issue":"","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"35","ability":"CT-冠脉CTA","orig_code":"CT2604837","platform_code":"","gender":"女","age":"74岁","city":"阜阳市","duration":"","issue":"1、此数据没有tag值，增加后重新上传就可以了","proposer":"廖婷婷","status":"无法解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"36","ability":"CT-冠脉CTA","orig_code":"C2026019853","platform_code":"C2026019853","gender":"女","age":"72岁","city":"亳州市","duration":"-","issue":"2、第一次上传识别错误，没有tag值，识别成了头颈 / 识别失败 / 增加tag值，重新上传 / 状态：已识别","proposer":"廖婷婷","status":"已解决","resolver":"影联","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"37","ability":"CT-冠脉CTA","orig_code":"CT167759","platform_code":"CT167759","gender":"女","age":"62岁","city":"宿州市","duration":"5分34秒","issue":"第一次上传识别错误，增加tag值； / 钙化积分，不符合冠脉CTA","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"38","ability":"CT-冠脉CTA","orig_code":"20260130001007","platform_code":"20260130001007","gender":"男","age":"61岁","city":"芜湖市","duration":"5分17秒","issue":"","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"39","ability":"CT-冠脉CTA","orig_code":"CT2604562","platform_code":"60263642","gender":"女","age":"85岁","city":"阜阳市","duration":"3分15秒","issue":"识别成了tx门控钙化 / 增加tag值，重新上传；钙化积分，不符合冠脉CTA","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"40","ability":"CT-冠脉CTA","orig_code":"CT2604220237","platform_code":"CT2604220237","gender":"女","age":"67岁","city":"黄山市","duration":"","issue":"","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"41","ability":"CT-头颈CTA","orig_code":"10012035500","platform_code":"10012035500","gender":"女","age":"57岁","city":"宣城市","duration":"6分","issue":"重新上传","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"42","ability":"CT-头颈CTA","orig_code":"20260301229","platform_code":"20260301229","gender":"男","age":"50岁","city":"阜阳市","duration":"5分33秒","issue":"辅诊用时较长","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"43","ability":"CT-头颈CTA","orig_code":"AB454944","platform_code":"AB454944","gender":"女","age":"83岁","city":"合肥市","duration":"","issue":"重新上传","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"44","ability":"CT-头颈CTA","orig_code":"20260301042","platform_code":"20260301042","gender":"女","age":"63岁","city":"宿州市","duration":"","issue":"识别失败。图像被过滤。图像被过滤，原因是图像传输后缺图，导致序列内的InstanceNumber 不连续","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"45","ability":"CT-头颈CTA","orig_code":"20260227000994","platform_code":"20260227000975","gender":"男","age":"71岁","city":"淮南市","duration":"5分25秒","issue":"辅诊用时较长","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"46","ability":"CT-头颈CTA","orig_code":"863168","platform_code":"863168","gender":"男","age":"74岁","city":"六安市","duration":"5分15秒","issue":"辅诊用时较长","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"47","ability":"CT-头颈CTA","orig_code":"20260226002160","platform_code":"20260226002084","gender":"男","age":"68岁","city":"淮南市","duration":"5分21秒","issue":"辅诊用时较长","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"48","ability":"CT-头颈CTA","orig_code":"CT20260228010","platform_code":"0000706081","gender":"女","age":"78岁","city":"安庆市","duration":"2分28秒","issue":"重新上传","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"49","ability":"CT-头颈CTA","orig_code":"2090901","platform_code":"2090901","gender":"男","age":"61岁","city":"安庆市","duration":"6分38秒","issue":"辅诊用时较长","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"50","ability":"CT-头颈CTA","orig_code":"862691","platform_code":"862691","gender":"女","age":"73岁","city":"六安市","duration":"5分8秒","issue":"辅诊用时较长","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"51","ability":"CT-脑灌注CTP","orig_code":"CT2608159","platform_code":"CT2608159","gender":"男","age":"63岁","city":"宿州市","duration":"5分38秒","issue":"识别失败:BodyPartExamined, 推想之前不包含NECK，所以被过滤了，现已添加","proposer":"陶志强","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"52","ability":"CT-脑灌注CTP","orig_code":"20260201000449","platform_code":"20260201000449","gender":"女","age":"68岁","city":"芜湖市","duration":"","issue":"识别失败：未传CTP的序列","proposer":"尹俊雅","status":"无需解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"53","ability":"CT-脑灌注CTP","orig_code":"20260130001230","platform_code":"20260130001230","gender":"男","age":"76岁","city":"芜湖市","duration":"","issue":"识别失败：未传CTP的序列","proposer":"尹俊雅","status":"无需解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"54","ability":"CT-脑灌注CTP","orig_code":"CT99260129053","platform_code":"CT99260129053","gender":"女","age":"76岁","city":"蚌埠市","duration":"6分17秒","issue":"辅诊用时较长","proposer":"陶志强","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"55","ability":"CT-脑灌注CTP","orig_code":"2329288","platform_code":"2329288","gender":"男","age":"73岁","city":"亳州市","duration":"","issue":"识别失败：未传CTP的序列","proposer":"陶志强","status":"无需解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"56","ability":"CT-脑灌注CTP","orig_code":"5317907","platform_code":"0001683108","gender":"男","age":"80岁","city":"铜陵市","duration":"1天6小时5分10秒","issue":"图像传输中，一直没有返回结果。推想排查：有一个 240张的5mm序列。 分期后，是分了30个期，每期8张，240 = 30 * 8，但脑灌注推想后台单序列最小文件数量默认配置是每一期要>= 14张，所以被过滤了。已修改 / 厚层，我们只支持厚层的结节；但骨折+肺炎，还是只能是薄层 (0~3mm)","proposer":"陶志强","status":"已解决","resolver":"推想","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"57","ability":"CT-脑灌注CTP","orig_code":"CT202613069","platform_code":"CT202613069","gender":"男","age":"72岁","city":"亳州市","duration":"","issue":"识别失败：里面只传了CTA的序列，未传CTP的序列","proposer":"陶志强","status":"无需解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"58","ability":"CT-脑灌注CTP","orig_code":"ZYA793928","platform_code":"ZYA793928","gender":"男","age":"63岁","city":"淮南市","duration":"","issue":"识别失败：未传CTP的序列","proposer":"陶志强","status":"无需解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"59","ability":"CT-脑灌注CTP","orig_code":"CT2605070","platform_code":"CT2605070","gender":"女","age":"69岁","city":"宿州市","duration":"","issue":"识别失败：未传CTP的序列","proposer":"陶志强","status":"无需解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"60","ability":"CT-脑灌注CTP","orig_code":"20260119000826","platform_code":"20260119000803","gender":"女","age":"70岁","city":"淮南市","duration":"5分27秒","issue":"辅诊用时较长","proposer":"陶志强","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"62","ability":"CT-脑出血","orig_code":"CT00290494","platform_code":"CT00290494","gender":"女","age":"33岁","city":"淮南市","duration":"3小时1分32秒","issue":"1、识别失败：BodyPartExamined, 推想之前不包含HEAD，所以被过滤了，现已添加。 / 2、水肿不支持勾选：推想侧只是提供筛查提醒，是不支持勾选的，暂时不会把水肿加入到报告中","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"63","ability":"CT-脑出血","orig_code":"CT066119","platform_code":"CT066119","gender":"男","age":"84岁","city":"阜阳市","duration":"4分4秒","issue":"辅诊用时较长","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"64","ability":"CT-脑出血","orig_code":"CT2603080152","platform_code":"CT2603080152","gender":"男","age":"73岁","city":"黄山市","duration":"3分2秒","issue":"辅诊用时较长","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"66","ability":"CT-脑出血","orig_code":"CT00290477","platform_code":"CT00290477","gender":"男","age":"62岁","city":"淮南市","duration":"3小时4分45秒","issue":"识别失败：BodyPartExamined, 推想之前不包含HEAD，所以被过滤了，现已添加","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"67","ability":"CT-脑出血","orig_code":"CT202636389","platform_code":"CT202636389","gender":"女","age":"35岁","city":"亳州市","duration":"2分34秒","issue":"辅诊用时较长","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"69","ability":"CT-脑出血","orig_code":"20260308452","platform_code":"20260308452","gender":"女","age":"73岁","city":"阜阳市","duration":"3分43秒","issue":"辅诊用时较长","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"70","ability":"CT-脑出血","orig_code":"CT00290354","platform_code":"CT00290354","gender":"男","age":"70岁","city":"淮南市","duration":"2小时33分","issue":"识别失败：BodyPartExamined, 推想之前不包含HEAD，所以被过滤了，现已添加","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"71","ability":"CT-脑出血","orig_code":"CT172286","platform_code":"CT172286","gender":"男","age":"42岁","city":"宿州市","duration":"2小时28分45秒","issue":"识别失败：BodyPartExamined, 推想之前不包含HEAD，所以被过滤了，现已添加","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"72","ability":"CT-脑出血","orig_code":"CT001116803","platform_code":"CT001116803","gender":"男","age":"59岁","city":"六安市","duration":"2小时25分3秒","issue":"识别失败：BodyPartExamined, 推想之前不包含HEAD，所以被过滤了，现已添加","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"73","ability":"CT-脑出血","orig_code":"act153083","platform_code":"20260307000560","gender":"男","age":"3岁","city":"淮北市","duration":"","issue":"识别失败：1.25mm的薄层不满足辅诊条件，需要＞5mm","proposer":"尹俊雅","status":"无需解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"74","ability":"CT-ASPECT评分","orig_code":"CTb00134757","platform_code":"CTb00134757","gender":"女","age":"88岁","city":"淮南市","duration":"43分59秒","issue":"无返回结果：BodyPartExamined, 推想之前不包含HEAD，所以被过滤了，现已添加","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"75","ability":"CT-ASPECT评分","orig_code":"CTb00134733","platform_code":"CTb00134733","gender":"男","age":"45岁","city":"淮南市","duration":"46分32秒","issue":"无返回结果：BodyPartExamined, 推想之前不包含HEAD，所以被过滤了，现已添加","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"76","ability":"CT-ASPECT评分","orig_code":"BYCT20260205214","platform_code":"BYCT20260205214","gender":"女","age":"67岁","city":"阜阳市","duration":"55分30秒","issue":"1、无返回结果：BodyPartExamined, 推想之前不包含HEAD，所以被过滤了，现已添加。 / 2、点击查看AI结果，tab切换是在中间的，但是点击“脑出血”，tab就在右上了。 / 3、点击检查报告-复制按钮后，内容会蓝色高亮，与其他能力下的无感复制状态不同。 / 4、点击“图文报告”，大概加载6秒左右，也是出现空白页，并没有加载出来报告内容。","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"77","ability":"CT-ASPECT评分","orig_code":"CT00359730","platform_code":"CT00359730","gender":"男","age":"54岁","city":"六安市","duration":"2分41秒","issue":"辅诊用时较长","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"71","ability":"CT-ASPECT评分","orig_code":"5284398","platform_code":"0001665694","gender":"女","age":"79岁","city":"铜陵市","duration":"","issue":"识别失败。图像被过滤，原因是一个96张的1.5mm;一个24张的6mm序列，aspects要求大于2mm.6mm的序列，推想内置的部位识别模型，没把它识别出HEAD来导致的","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"72","ability":"CT-ASPECT评分","orig_code":"20250504000117","platform_code":"20250504000112","gender":"女","age":"47岁","city":"宣城市","duration":"1小时5分25秒","issue":"无返回结果：BodyPartExamined, 推想之前不包含HEAD，所以被过滤了，现已添加","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"73","ability":"CT-ASPECT评分","orig_code":"CTb00134676","platform_code":"CTb00134676","gender":"女","age":"66岁","city":"淮南市","duration":"49分12秒","issue":"无返回结果：BodyPartExamined, 推想之前不包含HEAD，所以被过滤了，现已添加","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"74","ability":"CT-ASPECT评分","orig_code":"CTb00134246","platform_code":"CTb00134246","gender":"女","age":"82岁","city":"淮南市","duration":"51分30秒","issue":"无返回结果：BodyPartExamined, 推想之前不包含HEAD，所以被过滤了，现已添加","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"75","ability":"CT-ASPECT评分","orig_code":"20251129000037","platform_code":"20251129000033","gender":"女","age":"42岁","city":"宣城市","duration":"1小时2分57秒","issue":"无返回结果：BodyPartExamined, 推想之前不包含HEAD，所以被过滤了，现已添加","proposer":"尹俊雅","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"76","ability":"CT-ASPECT评分","orig_code":"AB418547","platform_code":"AB418547","gender":"女","age":"54岁","city":"合肥市","duration":"2分29秒","issue":"辅诊用时较长","proposer":"尹俊雅","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"81","ability":"CT-门控钙化积分","orig_code":"CT2566031","platform_code":"60252581","gender":"女","age":"73岁","city":"阜阳市","duration":"1分14秒","issue":"","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"82","ability":"CT-门控钙化积分","orig_code":"CT2562259","platform_code":"60243958","gender":"女","age":"65岁","city":"阜阳市","duration":"1分34秒","issue":"","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"83","ability":"CT-门控钙化积分","orig_code":"CX20251210052","platform_code":"CX20251210052","gender":"男","age":"53岁","city":"蚌埠市","duration":"-","issue":"第一次失败，增加tag值成功了 / 状态：识别失败 / 胸部","proposer":"廖婷婷","status":"未解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"","note":""},{"seq":"84","ability":"CT-门控钙化积分","orig_code":"4683347","platform_code":"4683347","gender":"女","age":"55岁","city":"阜阳市","duration":"-","issue":"第一次失败，增加tag值成功了 / 状态：识别失败 / 动脉 / 部位识别模型，没有识别到冠脉。 / 所以暂时没办法创建钙化积分任务。","proposer":"廖婷婷","status":"无法解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"85","ability":"CT-门控钙化积分","orig_code":"10241259","platform_code":"0004325308","gender":"女","age":"84岁","city":"合肥市","duration":"-","issue":"第一次失败，增加tag值成功了 / 状态：识别失败 / 部位识别模型，没有识别到冠脉。 / 所以暂时没办法创建钙化积分任务。","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"86","ability":"CT-门控钙化积分","orig_code":"CT20250620283","platform_code":"CT20250620283","gender":"女","age":"80岁","city":"合肥市","duration":"-","issue":"第一次失败，增加tag值成功了 / 状态：识别失败 / 部位识别模型，没有识别到冠脉。 / 所以暂时没办法创建钙化积分任务。","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"87","ability":"CT-门控钙化积分","orig_code":"C20250516022","platform_code":"C20250516022","gender":"男","age":"53岁","city":"蚌埠市","duration":"4分12秒","issue":"识别成骨折","proposer":"廖婷婷","status":"无需解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"88","ability":"CT-门控钙化积分","orig_code":"CT2506667","platform_code":"60119305","gender":"女","age":"79岁","city":"阜阳市","duration":"1分34秒","issue":"需要重新找一组数据","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"89","ability":"CT-门控钙化积分","orig_code":"CT2436920","platform_code":"60071300","gender":"男","age":"56岁","city":"阜阳市","duration":"2分12秒","issue":"","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""},{"seq":"90","ability":"CT-门控钙化积分","orig_code":"CT2431939","platform_code":"60062009","gender":"男","age":"83岁","city":"阜阳市","duration":"3分1秒","issue":"","proposer":"廖婷婷","status":"已解决","resolver":"","priority":"","found_date":"2026-04-22","resolve_date":"2026-04-23","note":""}];
+
+// ════════ CONSTANTS ════════
+const STATUS_COLOR = {
+  '已解决': '#19be6b', '未解决': '#ed4014', '解决中': '#4e90fe',
+  '无需解决': '#aaaaaa', '无法解决': '#9254de'
+};
+const ABILITIES_ORDER = [
+  'CT肺结节','CT肋骨骨折','CT-肺炎','CT-冠脉CTA','CT-头颈CTA',
+  'CT-脑灌注CTP','CT-脑出血','CT-ASPECT评分','CT-门控钙化积分'
+];
+const SHORT_ABILITIES = ['肺结节','肋骨骨折','肺炎','冠脉CTA','头颈CTA','脑灌注CTP','脑出血','ASPECT评分','门控钙化'];
+const STATUS_LIST = ['已解决','解决中','无需解决','无法解决','未解决'];
+const ISSUE_KEYWORDS = [
+  { name: '辅诊用时较长', keys: ['用时较长','辅诊用时'], color: '#f90' },
+  { name: 'tag值缺失', keys: ['tag值','没有tag','无tag'], color: '#3b82f6' },
+  { name: 'BodyPart过滤', keys: ['BodyPartExamined','被过滤'], color: '#9254de' },
+  { name: '识别错误/失败', keys: ['识别失败','识别错误','识别成'], color: '#ed4014' },
+  { name: '未传CTP序列', keys: ['未传CTP','未传ctp'], color: '#64748b' },
+  { name: '报告空白/展示', keys: ['空白','报告打开','图文报告'], color: '#f97316' },
+  { name: '上传失败', keys: ['无法上传','上传失败','服务断电'], color: '#06b6d4' },
+  { name: '图像传输超时', keys: ['图像传输中','一直没有返回'], color: '#14b8a6' },
+];
+
+Chart.defaults.color = '#667085';
+Chart.defaults.font.family = "Inter, -apple-system, 'PingFang SC', sans-serif";
+Chart.defaults.font.size = 12;
+
+// ════════ CHART INSTANCES ════════
+let chartStackedBar, chartDonut, chartCity, chartGender, chartRadar;
+
+// ════════ STATS HELPERS ════════
+function computeStats(records) {
+  const total      = records.length;
+  const issueCount = records.filter(r => r.issue && r.issue.trim()).length;
+  const resolved   = records.filter(r => r.status === '已解决').length;
+  const noNeed     = records.filter(r => r.status === '无需解决').length;
+  const processing = records.filter(r => r.status === '解决中').length;
+  const unresolved = records.filter(r => r.status === '未解决').length;
+  const cantSolve  = records.filter(r => r.status === '无法解决').length;
+  const effective  = total - noNeed > 0 ? Math.round(resolved / (total - noNeed) * 100) : 0;
+  return { total, issueCount, resolved, noNeed, processing, unresolved, cantSolve, effective };
+}
+
+function computeAbilityStatus(records) {
+  const map = {};
+  for (const ab of ABILITIES_ORDER) {
+    map[ab] = { '已解决':0,'解决中':0,'无需解决':0,'无法解决':0,'未解决':0 };
+  }
+  for (const r of records) {
+    if (map[r.ability] && r.status) map[r.ability][r.status] = (map[r.ability][r.status] || 0) + 1;
+  }
+  return map;
+}
+
+function computeCityTop(records) {
+  const cnt = {};
+  for (const r of records) if (r.city) cnt[r.city] = (cnt[r.city]||0)+1;
+  return Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+}
+
+function computeGender(records) {
+  const f = records.filter(r=>r.gender==='女').length;
+  const m = records.filter(r=>r.gender==='男').length;
+  return [f, m];
+}
+
+function computeIssueCategories(records) {
+  return ISSUE_KEYWORDS.map(kw => {
+    const cnt = records.filter(r => kw.keys.some(k => (r.issue||'').includes(k))).length;
+    return { name: kw.name, count: cnt, color: kw.color };
+  }).concat([{
+    name: '其他',
+    count: records.filter(r => {
+      const iss = r.issue || '';
+      return iss && !ISSUE_KEYWORDS.some(kw => kw.keys.some(k => iss.includes(k)));
+    }).length,
+    color: '#aaaaaa'
+  }]);
+}
+
+// ════════ KPI UPDATE ════════
+function updateKPIs(s) {
+  const setKPI = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  setKPI('kpi-dataset', s.total);
+  setKPI('kpi-total',   s.issueCount);
+  setKPI('kpi-resolved', s.resolved);
+  setKPI('kpi-noneed', s.noNeed);
+  setKPI('kpi-pending', s.unresolved + s.processing);
+  setKPI('kpi-rate', s.effective + '%');
+  setEl('kpi-sub-pending', `未解决 ${s.unresolved} · 解决中 ${s.processing}`);
+  setEl('kpi-sub-rate', `${s.resolved} ÷ (${s.total} − ${s.noNeed}) ≈ ${s.effective}%`);
+  // bars
+  setBar('bar-resolved', s.total ? s.resolved/s.total*100 : 0);
+  setBar('bar-noneed',   s.total ? s.noNeed/s.total*100 : 0);
+  setBar('bar-pending',  s.total ? (s.unresolved+s.processing)/s.total*100 : 0);
+  setBar('bar-rate',     s.effective);
+}
+function setEl(id, text) { const el = document.getElementById(id); if(el) el.textContent = text; }
+function setBar(id, pct) { const el = document.getElementById(id); if(el) el.style.width = pct + '%'; }
+
+// ════════ CHARTS ════════
+function buildStackedBar(records) {
+  if(chartStackedBar) chartStackedBar.destroy();
+  const abMap = computeAbilityStatus(records);
+  chartStackedBar = new Chart(document.getElementById('stackedBar'), {
+    type: 'bar',
+    data: {
+      labels: SHORT_ABILITIES,
+      datasets: STATUS_LIST.map(s => ({
+        label: s,
+        data: ABILITIES_ORDER.map(ab => abMap[ab]?.[s] || 0),
+        backgroundColor: STATUS_COLOR[s],
+        borderRadius: s === '未解决' ? { topLeft:4,topRight:4 } : 0,
+        borderSkipped: false,
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position:'top', labels:{ padding:12,boxWidth:12,font:{size:11} } } },
+      scales: {
+        x: { stacked:true, grid:{color:'rgba(0,0,0,0.06)'}, ticks:{font:{size:11}} },
+        y: { stacked:true, grid:{color:'rgba(0,0,0,0.06)'}, ticks:{stepSize:2} }
+      }
+    }
+  });
+}
+
+function buildDonut(records) {
+  if(chartDonut) chartDonut.destroy();
+  const s = computeStats(records);
+  chartDonut = new Chart(document.getElementById('statusDonut'), {
+    type: 'doughnut',
+    data: {
+      labels: ['已解决','未解决','解决中','无需解决','无法解决'],
+      datasets: [{ data:[s.resolved,s.unresolved,s.processing,s.noNeed,s.cantSolve],
+        backgroundColor:['#19be6b','#ed4014','#4e90fe','#aaaaaa','#9254de'],
+        borderWidth:0, hoverOffset:8 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins:{
+        legend:{position:'right',labels:{padding:10,font:{size:11}}},
+        tooltip:{ callbacks:{ label:(ctx)=>` ${ctx.label}: ${ctx.raw} 条 (${(ctx.raw/(s.total||1)*100).toFixed(1)}%)` } }
+      }
+    }
+  });
+}
+
+function buildCityBar(records) {
+  if(chartCity) chartCity.destroy();
+  const top = computeCityTop(records);
+  const colors = ['#4e90fe','#19be6b','#f90','#ed4014','#9254de','#00c5cd','#ff6b6b','#45aaf2','#a55eea','#2bcbba','#f43f5e','#84cc16','#0ea5e9','#fb923c'];
+  chartCity = new Chart(document.getElementById('cityBar'), {
+    type:'bar', indexAxis:'y',
+    data:{
+      labels: top.map(x=>x[0]),
+      datasets:[{ label:'病例数', data:top.map(x=>x[1]),
+        backgroundColor: top.map((_,i)=>colors[i%colors.length]+'cc'),
+        borderRadius:4, borderSkipped:false }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{ x:{grid:{color:'rgba(0,0,0,0.06)'}}, y:{grid:{display:false},ticks:{font:{size:11}}} }
+    }
+  });
+}
+
+function buildGenderPie(records) {
+  if(chartGender) chartGender.destroy();
+  const [f,m] = computeGender(records);
+  chartGender = new Chart(document.getElementById('genderPie'), {
+    type:'pie',
+    data:{
+      labels:[`女性 (${f})`,`男性 (${m})`],
+      datasets:[{ data:[f,m],
+        backgroundColor:['rgba(146,84,222,0.7)','rgba(78,144,254,0.7)'],
+        borderWidth:0, hoverOffset:6 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:11}}},
+        tooltip:{ callbacks:{ label:(ctx)=>` ${ctx.label}: ${((ctx.raw/(f+m||1))*100).toFixed(1)}%` } }
+      }
+    }
+  });
+}
+
+function buildRadar(records) {
+  if(chartRadar) chartRadar.destroy();
+  const abMap = computeAbilityStatus(records);
+  chartRadar = new Chart(document.getElementById('abilityCount'), {
+    type:'radar',
+    data:{
+      labels: SHORT_ABILITIES,
+      datasets:[
+        { label:'测试数量', data:ABILITIES_ORDER.map(ab=>{const d=abMap[ab];return d?Object.values(d).reduce((a,b)=>a+b,0):0;}),
+          backgroundColor:'rgba(78,144,254,0.10)', borderColor:'#4e90fe', pointBackgroundColor:'#4e90fe', pointRadius:3 },
+        { label:'已解决', data:ABILITIES_ORDER.map(ab=>abMap[ab]?.['已解决']||0),
+          backgroundColor:'rgba(25,190,107,0.10)', borderColor:'#19be6b', pointBackgroundColor:'#19be6b', pointRadius:3 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
+      scales:{ r:{
+        grid:{color:'rgba(0,0,0,0.06)'}, angleLines:{color:'rgba(0,0,0,0.06)'},
+        pointLabels:{font:{size:10}}, ticks:{stepSize:3,backdropColor:'transparent'}
+      } }
+    }
+  });
+}
+
+function buildIssueList(records) {
+  const cats = computeIssueCategories(records).filter(c=>c.count>0);
+  const maxC = Math.max(...cats.map(c=>c.count), 1);
+  const el = document.getElementById('issueList');
+  el.innerHTML = '';
+  cats.forEach(item => {
+    const li = document.createElement('li');
+    li.className = 'issue-item';
+    li.innerHTML = `
+      <div class="issue-dot" style="background:${item.color}"></div>
+      <span class="issue-name">${item.name}</span>
+      <div class="issue-bar-bg"><div class="issue-bar-fill" style="width:${item.count/maxC*100}%;background:${item.color}"></div></div>
+      <span class="issue-count">${item.count}</span>`;
+    el.appendChild(li);
+  });
+}
+
+// ════════ DASHBOARD REFRESH ════════
+function refreshDashboard(records) {
+  RAW_DATA = records;
+  const s = computeStats(records);
+  updateKPIs(s);
+  buildStackedBar(records);
+  buildDonut(records);
+  buildCityBar(records);
+  buildGenderPie(records);
+  buildRadar(records);
+  buildIssueList(records);
+  // update header stat text
+  const sub = document.querySelector('.chart-sub[data-donut]');
+  if(sub) sub.textContent = `全部 ${records.length} 条记录按状态占比`;
+  // reset table
+  filteredData = [...records];
+  currentPage = 1;
+  // reset filter dropdowns
+  ['abilityFilter','statusFilter','proposerFilter'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('searchInput').value='';
+  renderTable();
+}
+
+// ════════ TABLE ════════
+let filteredData = [...RAW_DATA];
+let currentPage = 1;
+const PAGE_SIZE = 15;
+
+// initial render
+refreshDashboard(RAW_DATA);
+
+function getBadge(status) {
+  const map = { '已解决':'badge-resolved','未解决':'badge-unresolved','解决中':'badge-processing','无需解决':'badge-notneed','无法解决':'badge-cantsolve' };
+  return `<span class="badge ${map[status]||''}">${status||'-'}</span>`;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  const start = (currentPage-1)*PAGE_SIZE;
+  const pageData = filteredData.slice(start, start+PAGE_SIZE);
+  tbody.innerHTML = pageData.map((r,i) => `
+    <tr>
+      <td style="color:var(--text3);font-size:11px">${start+i+1}</td>
+      <td style="color:var(--text3);font-size:11px">${r.seq||'-'}</td>
+      <td class="td-ability"><span class="ability-pill">${r.ability}</span></td>
+      <td><span class="td-code">${r.orig_code||'-'}</span></td>
+      <td style="color:var(--text2)">${r.gender||'-'}</td>
+      <td style="white-space:nowrap;color:var(--text2)">${r.age||'-'}</td>
+      <td style="white-space:nowrap;color:var(--text2)">${r.city||'-'}</td>
+      <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text3);font-size:11px">${r.duration||'-'}</td>
+      <td>${getBadge(r.status)}</td>
+      <td style="white-space:nowrap;font-weight:500">${r.proposer||'-'}</td>
+      <td>${r.priority?`<span class="badge badge-high">${r.priority}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
+      <td style="white-space:nowrap;font-size:11.5px;color:var(--text2)">${r.found_date||'-'}</td>
+      <td style="white-space:nowrap;font-size:11.5px;color:var(--text2)">${r.resolve_date||'-'}</td>
+      <td class="td-issue" title="${r.issue}">${r.issue||'<span style="color:var(--text3)">—</span>'}</td>
+    </tr>`).join('');
+  document.getElementById('tableCount').textContent = `共 ${filteredData.length} 条`;
+  renderPagination();
+}
+
+function renderPagination() {
+  const total = Math.ceil(filteredData.length/PAGE_SIZE);
+  const pg = document.getElementById('pagination');
+  if(total<=1){ pg.innerHTML=''; return; }
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹ 上一页</button>`;
+  for(let i=1;i<=total;i++){
+    if(i===1||i===total||Math.abs(i-currentPage)<=1) html+=`<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    else if(Math.abs(i-currentPage)===2) html+=`<span style="color:var(--text2)">…</span>`;
+  }
+  html+=`<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>下一页 ›</button>`;
+  pg.innerHTML = html;
+}
+
+function goPage(p) {
+  const total = Math.ceil(filteredData.length/PAGE_SIZE);
+  if(p<1||p>total) return;
+  currentPage = p; renderTable();
+}
+
+function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const ability = document.getElementById('abilityFilter').value;
+  const status = document.getElementById('statusFilter').value;
+  const proposer = document.getElementById('proposerFilter').value;
+  filteredData = RAW_DATA.filter(r => {
+    if(ability && r.ability!==ability) return false;
+    if(status && r.status!==status) return false;
+    if(proposer && r.proposer!==proposer) return false;
+    if(search) {
+      const combined = [r.issue,r.orig_code,r.city,r.ability,r.platform_code].join(' ').toLowerCase();
+      if(!combined.includes(search)) return false;
+    }
+    return true;
+  });
+  currentPage=1; renderTable();
+}
+
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+document.getElementById('abilityFilter').addEventListener('change', applyFilters);
+document.getElementById('statusFilter').addEventListener('change', applyFilters);
+document.getElementById('proposerFilter').addEventListener('change', applyFilters);
+
+// ════════ UPLOAD ════════
+let pendingFiles = [];
+
+const panel = document.getElementById('uploadPanel');
+const fabBtn = document.getElementById('fabBtn');
+const fileInput = document.getElementById('fileInput');
+const dropZone = document.getElementById('dropZone');
+const fileListEl = document.getElementById('uploadFileList');
+const parseBtn = document.getElementById('parseBtn');
+const uploadMsg = document.getElementById('uploadMsg');
+
+fabBtn.addEventListener('click', () => {
+  panel.classList.toggle('open');
+});
+document.getElementById('uploadClose').addEventListener('click', () => panel.classList.remove('open'));
+document.addEventListener('click', e => {
+  if(!panel.contains(e.target) && !fabBtn.contains(e.target)) panel.classList.remove('open');
+});
+document.getElementById('uploadCancelBtn').addEventListener('click', () => {
+  pendingFiles=[]; renderFileList(); panel.classList.remove('open');
+});
+
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => addFiles(Array.from(fileInput.files)));
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  addFiles(Array.from(e.dataTransfer.files));
+});
+
+function addFiles(files) {
+  const allowed = ['.xlsx','.xls','.docx','.doc'];
+  for(const f of files) {
+    const ext = '.' + f.name.split('.').pop().toLowerCase();
+    if(!allowed.includes(ext)) { showMsg('不支持的文件格式：' + f.name, 'error'); continue; }
+    if(!pendingFiles.find(p=>p.name===f.name)) pendingFiles.push(f);
+  }
+  renderFileList();
+  uploadMsg.className='upload-msg'; uploadMsg.style.display='none';
+}
+
+function renderFileList() {
+  if(!pendingFiles.length){ fileListEl.innerHTML=''; parseBtn.disabled=true; return; }
+  parseBtn.disabled=false;
+  fileListEl.innerHTML = pendingFiles.map((f,i) => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    const icon = ext==='xlsx'||ext==='xls' ? '📊' : '📄';
+    const size = f.size>1024*1024 ? (f.size/1024/1024).toFixed(1)+'MB' : (f.size/1024).toFixed(0)+'KB';
+    return `<div class="upload-file-item">
+      <span class="file-icon">${icon}</span>
+      <div class="file-info"><div class="file-name">${f.name}</div><div class="file-size">${size}</div></div>
+      <span class="file-status" onclick="removeFile(${i})" style="cursor:pointer;color:var(--text3)" title="移除">✕</span>
+    </div>`;
+  }).join('');
+}
+
+function removeFile(i) { pendingFiles.splice(i,1); renderFileList(); }
+
+function showMsg(msg, type) {
+  uploadMsg.textContent = msg;
+  uploadMsg.className = 'upload-msg ' + type;
+}
+
+// Excel date serial → YYYY-MM-DD
+function excelDateToStr(n) {
+  if(!n || isNaN(n)) return '';
+  try {
+    const d = new Date(Math.round((n - 25569)*86400*1000));
+    return d.toISOString().slice(0,10);
+  } catch{return '';}
+}
+
+function parseExcel(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, {type:'array', cellDates:false});
+        // pick first non-reserved sheet
+        const sheetName = wb.SheetNames.find(n=>!n.startsWith('WpsReserved')) || wb.SheetNames[0];
+        const ws = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+
+        // find header row: contains '序号' or '能力' and '状态'
+        let hdrIdx = -1;
+        for(let i=0;i<Math.min(rows.length,10);i++) {
+          const row = rows[i].map(c=>String(c||''));
+          if(row.some(c=>c.includes('序号')||c.includes('序 号')) && row.some(c=>c.includes('能力'))) { hdrIdx=i; break; }
+        }
+        if(hdrIdx<0) { reject(new Error(file.name + '：未找到表头行（需包含"序号"和"能力"列）')); return; }
+
+        const hdrs = rows[hdrIdx].map(c=>String(c||'').trim());
+        const idx = name => hdrs.findIndex(h=>h.includes(name));
+        const col = {
+          seq:   Math.max(idx('序号'),0),
+          ab:    idx('能力'),
+          orig:  idx('原始数据'),
+          plat:  idx('AIsaas'),
+          sex:   idx('性别'),
+          age:   idx('年龄'),
+          city:  idx('地市'),
+          dur:   idx('辅诊用时'),
+          issue: idx('问题描述'),
+          prop:  idx('提出人'),
+          stat:  idx('解决状态'),
+          res:   idx('解决人'),
+          pri:   idx('优先级'),
+          fd:    idx('发现时间'),
+          rd:    idx('解决时间'),
+          note:  idx('备注'),
+        };
+
+        const records = [];
+        for(let i=hdrIdx+1;i<rows.length;i++) {
+          const r = rows[i];
+          if(!r.some(c=>c!=='' && c!==null && c!==undefined)) continue;
+          const get = (c,fallback='') => c>=0 && r[c]!==undefined ? String(r[c]).trim() : fallback;
+          const getDate = c => {
+            if(c<0) return '';
+            const v = r[c];
+            if(!v) return '';
+            if(typeof v === 'number') return excelDateToStr(v);
+            return String(v).trim();
+          };
+          records.push({
+            seq:           get(col.seq),
+            ability:       get(col.ab),
+            orig_code:     get(col.orig).replace(/\n/g,' '),
+            platform_code: get(col.plat),
+            gender:        get(col.sex),
+            age:           get(col.age),
+            city:          get(col.city),
+            duration:      get(col.dur).replace(/\n/g,' '),
+            issue:         get(col.issue).replace(/\n/g,' / '),
+            proposer:      get(col.prop),
+            status:        get(col.stat),
+            resolver:      get(col.res),
+            priority:      get(col.pri),
+            found_date:    getDate(col.fd),
+            resolve_date:  getDate(col.rd),
+            note:          get(col.note),
+          });
+        }
+        if(!records.length) { reject(new Error(file.name + '：未解析到有效数据行')); return; }
+        resolve(records);
+      } catch(err) { reject(new Error(file.name + '：解析失败 — ' + err.message)); }
+    };
+    reader.onerror = () => reject(new Error(file.name + '：文件读取失败'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function parseWord(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(ext==='doc') return Promise.reject(new Error(file.name + '：.doc 旧格式暂不支持，请在 Word 中另存为 .docx'));
+  return new Promise((resolve,reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      mammoth.extractRawText({arrayBuffer: e.target.result})
+        .then(r => resolve(r.value))
+        .catch(err => reject(new Error(file.name + '：Word 解析失败 — ' + err.message)));
+    };
+    reader.onerror = () => reject(new Error(file.name + '：文件读取失败'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+parseBtn.addEventListener('click', async () => {
+  if(!pendingFiles.length) return;
+  parseBtn.disabled = true;
+  parseBtn.innerHTML = '<div class="spinner"></div> 解析中…';
+  uploadMsg.className='upload-msg'; uploadMsg.style.display='none';
+
+  const excelFiles = pendingFiles.filter(f=>['xlsx','xls'].includes(f.name.split('.').pop().toLowerCase()));
+  const wordFiles  = pendingFiles.filter(f=>['docx','doc'].includes(f.name.split('.').pop().toLowerCase()));
+
+  try {
+    let allRecords = [];
+    const errors = [];
+
+    for(const f of excelFiles) {
+      try { const r = await parseExcel(f); allRecords = allRecords.concat(r); }
+      catch(e) { errors.push(e.message); }
+    }
+    for(const f of wordFiles) {
+      try { await parseWord(f); /* word text currently ignored */ }
+      catch(e) { errors.push(e.message); }
+    }
+
+    if(!allRecords.length && excelFiles.length>0) {
+      throw new Error(errors.join(' | ') || '未解析到任何有效数据');
+    }
+
+    if(allRecords.length>0) {
+      // deduplicate by orig_code (later overrides earlier)
+      const seen = new Map();
+      for(const r of allRecords) seen.set(r.orig_code||Math.random(), r);
+      const deduped = Array.from(seen.values());
+      refreshDashboard(deduped);
+      const msg = `✅ 成功载入 ${deduped.length} 条记录` + (errors.length ? `，${errors.length} 个文件有警告` : '');
+      showMsg(msg, 'success');
+    }
+    if(errors.length && !allRecords.length) showMsg(errors.join('；'), 'error');
+    else if(errors.length) showMsg('部分文件警告：' + errors.join('；'), 'error');
+
+    pendingFiles = []; renderFileList(); fileInput.value='';
+  } catch(e) {
+    showMsg('❌ ' + e.message, 'error');
+  } finally {
+    parseBtn.disabled = false;
+    parseBtn.innerHTML = '开始解析';
+  }
+});
+
+function switchTab(name) {
+  document.querySelectorAll('.header-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.header-tab[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+</script>
+
+</body>
+</html>
