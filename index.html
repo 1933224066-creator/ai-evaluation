@@ -1124,7 +1124,7 @@ function buildIssueDetail(data) {
   const abilityListEl = document.getElementById('issueAbilityList');
   const detailListEl  = document.getElementById('issueDetailList');
   if (!abilityListEl || !detailListEl) return;
-  const abilities = [...new Set(data.map(r => r.ability))];
+  const abilities = [...new Set(data.map(r => r.ability))].sort((a, b) => data.filter(r => r.ability === b).length - data.filter(r => r.ability === a).length);
   function renderDetail(ab) {
     abilityListEl.querySelectorAll('.issue-ability-item').forEach(el => {
       el.classList.toggle('active', el.dataset.ab === ab);
