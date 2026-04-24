@@ -9,32 +9,32 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #f5f6f8;
+    --bg: #eef2f9;
     --card: #ffffff;
-    --border: #e8eaed;
-    --border2: #f0f2f5;
-    --text: #1f2329;
-    --text2: #646a73;
-    --text3: #adb0b8;
-    --accent: #4e90fe;
-    --accent2: #2d73e8;
-    --blue: #4e90fe;
-    --blue-light: #EBF3FF;
-    --green: #19be6b;
-    --green-bg: #f0faf5;
-    --green-ring: #a8e6c8;
-    --red: #ed4014;
-    --red-bg: #fff2f0;
-    --red-ring: #ffbcb2;
-    --amber: #f90;
-    --amber-bg: #fff8e6;
-    --amber-ring: #ffd980;
-    --gray: #8f959e;
-    --gray-bg: #f7f8fa;
-    --gray-ring: #dcdee2;
-    --purple: #7c3aed;
-    --purple-bg: #f5f3ff;
-    --purple-ring: #ddd6fe;
+    --border: #d4dff0;
+    --border2: #e4ecf7;
+    --text: #0f1f3d;
+    --text2: #3d5a8a;
+    --text3: #7a96c2;
+    --accent: #1a6fdb;
+    --accent2: #1358b8;
+    --blue: #1a6fdb;
+    --blue-light: #deeafc;
+    --green: #0ca678;
+    --green-bg: #e6f7f2;
+    --green-ring: #8ed8c1;
+    --red: #e03131;
+    --red-bg: #ffeaea;
+    --red-ring: #f8aaaa;
+    --amber: #e08c00;
+    --amber-bg: #fff5d6;
+    --amber-ring: #f5cc6a;
+    --gray: #5e7aa0;
+    --gray-bg: #f0f4fb;
+    --gray-ring: #c2d2e8;
+    --purple: #6741d9;
+    --purple-bg: #eeebff;
+    --purple-ring: #c5b8f5;
     --radius: 6px;
     --content-width: 1200px;
   }
@@ -51,7 +51,7 @@
 
   /* ── Header ── */
   .header {
-    background: #1c2333;
+    background: #0d1e3d;
     border-bottom: none;
     padding: 0 40px;
     height: 52px;
@@ -489,37 +489,37 @@
       <div class="kpi-label">数据集</div>
       <div class="kpi-value" id="kpi-dataset">90</div>
       <div class="kpi-sub">覆盖 9 种 CT 辅诊能力</div>
-      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:var(--gray)"></div></div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:#5e7aa0"></div></div>
     </div>
     <div class="kpi-card blue">
       <div class="kpi-label">问题总数</div>
       <div class="kpi-value" id="kpi-total">88</div>
       <div class="kpi-sub">评估过程中数据问题</div>
-      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:#1890FF"></div></div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:#1a6fdb"></div></div>
     </div>
     <div class="kpi-card green">
       <div class="kpi-label">已解决</div>
       <div class="kpi-value" id="kpi-resolved">57</div>
       <div class="kpi-sub">解决率 63.3%</div>
-      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:63.3%;background:#36CFC9" id="bar-resolved"></div></div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:63.3%;background:#0ca678" id="bar-resolved"></div></div>
     </div>
     <div class="kpi-card amber">
       <div class="kpi-label">无需解决</div>
       <div class="kpi-value" id="kpi-noneed">11</div>
       <div class="kpi-sub">数据本身问题，不纳入统计</div>
-      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:12.2%;background:#5A6874" id="bar-noneed"></div></div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:12.2%;background:#5e7aa0" id="bar-noneed"></div></div>
     </div>
     <div class="kpi-card red">
       <div class="kpi-label">待解决</div>
       <div class="kpi-value" id="kpi-pending">22</div>
       <div class="kpi-sub" id="kpi-sub-pending">未解决 18 · 解决中 4</div>
-      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:24.4%;background:#FA8C16" id="bar-pending"></div></div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:24.4%;background:#e08c00" id="bar-pending"></div></div>
     </div>
     <div class="kpi-card purple">
       <div class="kpi-label">有效解决率</div>
       <div class="kpi-value" id="kpi-rate">72%</div>
       <div class="kpi-sub" id="kpi-sub-rate">57 ÷ (90 − 11) ≈ 72.2%</div>
-      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:72%;background:#722ED1" id="bar-rate"></div></div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:72%;background:#6741d9" id="bar-rate"></div></div>
     </div>
   </div>
 
@@ -744,8 +744,8 @@ let RAW_DATA = [{"seq":"1","ability":"CT肺结节","orig_code":"130042723","plat
 
 // ════════ CONSTANTS ════════
 const STATUS_COLOR = {
-  '已解决': '#19be6b', '未解决': '#ed4014', '解决中': '#4e90fe',
-  '无需解决': '#aaaaaa', '无法解决': '#9254de'
+  '已解决': '#0ca678', '未解决': '#e03131', '解决中': '#1a6fdb',
+  '无需解决': '#5e7aa0', '无法解决': '#6741d9'
 };
 const ABILITIES_ORDER = [
   'CT肺结节','CT肋骨骨折','CT-肺炎','CT-冠脉CTA','CT-头颈CTA',
@@ -899,7 +899,7 @@ function buildDonut(records) {
     data: {
       labels: ['已解决','未解决','解决中','无需解决','无法解决'],
       datasets: [{ data:[s.resolved,s.unresolved,s.processing,s.noNeed,s.cantSolve],
-        backgroundColor:['#19be6b','#ed4014','#4e90fe','#aaaaaa','#9254de'],
+        backgroundColor:['#0ca678','#e03131','#1a6fdb','#5e7aa0','#6741d9'],
         borderWidth:0, hoverOffset:8 }]
     },
     options: {
@@ -915,7 +915,7 @@ function buildDonut(records) {
 function buildCityBar(records) {
   if(chartCity) chartCity.destroy();
   const top = computeCityTop(records);
-  const colors = ['#4e90fe','#19be6b','#f90','#ed4014','#9254de','#00c5cd','#ff6b6b','#45aaf2','#a55eea','#2bcbba','#f43f5e','#84cc16','#0ea5e9','#fb923c'];
+  const colors = ['#1a6fdb','#0ca678','#e08c00','#e03131','#6741d9','#0891b2','#2563eb','#059669','#7c3aed','#0284c7','#dc2626','#16a34a','#1d4ed8','#ea580c'];
   chartCity = new Chart(document.getElementById('cityBar'), {
     type:'bar', indexAxis:'y',
     data:{
@@ -940,7 +940,7 @@ function buildGenderPie(records) {
     data:{
       labels:[`女性 (${f})`,`男性 (${m})`],
       datasets:[{ data:[f,m],
-        backgroundColor:['rgba(146,84,222,0.7)','rgba(78,144,254,0.7)'],
+        backgroundColor:['rgba(103,65,217,0.75)','rgba(26,111,219,0.75)'],
         borderWidth:0, hoverOffset:6 }]
     },
     options:{
@@ -966,7 +966,7 @@ function buildAgeBar(records) {
         data: groups.map(g=>g.count),
         backgroundColor: groups.map(g => {
           const ratio = g.count / maxCount;
-          return `rgba(78,144,254,${0.35 + ratio*0.6})`;
+          return `rgba(26,111,219,${0.35 + ratio*0.6})`;
         }),
         borderRadius:4, borderSkipped:false
       }]
@@ -993,9 +993,9 @@ function buildRadar(records) {
       labels: SHORT_ABILITIES,
       datasets:[
         { label:'测试数量', data:ABILITIES_ORDER.map(ab=>{const d=abMap[ab];return d?Object.values(d).reduce((a,b)=>a+b,0):0;}),
-          backgroundColor:'rgba(78,144,254,0.10)', borderColor:'#4e90fe', pointBackgroundColor:'#4e90fe', pointRadius:3 },
+          backgroundColor:'rgba(26,111,219,0.10)', borderColor:'#1a6fdb', pointBackgroundColor:'#1a6fdb', pointRadius:3 },
         { label:'已解决', data:ABILITIES_ORDER.map(ab=>abMap[ab]?.['已解决']||0),
-          backgroundColor:'rgba(25,190,107,0.10)', borderColor:'#19be6b', pointBackgroundColor:'#19be6b', pointRadius:3 }
+          backgroundColor:'rgba(12,166,120,0.10)', borderColor:'#0ca678', pointBackgroundColor:'#0ca678', pointRadius:3 }
       ]
     },
     options:{
