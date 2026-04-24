@@ -1485,10 +1485,11 @@ parseBtn.addEventListener('click', async () => {
   try {
     let allRecords = [];
     const errors = [];
+    let issueFileHandled = false;
 
     for(const f of excelFiles) {
       if (f.name.includes('\u4e3b\u8981\u95ee\u9898\u7c7b\u578b')) {
-        try { await parseIssueExcel(f); }
+        try { await parseIssueExcel(f); issueFileHandled = true; }
         catch(e) { errors.push(e.message); }
         continue;
       }
@@ -1500,7 +1501,7 @@ parseBtn.addEventListener('click', async () => {
       catch(e) { errors.push(e.message); }
     }
 
-    if(!allRecords.length && excelFiles.length>0) {
+    if(!allRecords.length && excelFiles.length>0 && !issueFileHandled) {
       throw new Error(errors.join(' | ') || '未解析到任何有效数据');
     }
 
