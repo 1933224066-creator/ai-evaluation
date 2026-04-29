@@ -653,27 +653,21 @@
       <div class="insight-icon">✅</div>
       <div class="insight-body">
         <div class="insight-title">高效解决能力</div>
-        <div class="insight-text">
-          <span class="insight-highlight">CT肺结节</span>全部 10 条均已解决，解决率 <span class="insight-highlight">100%</span>。CT肋骨骨折解决率 <span class="insight-highlight">90%</span>，上传 / 配置类问题响应迅速。
-        </div>
+        <div class="insight-text" id="insight-ok-text"></div>
       </div>
     </div>
     <div class="insight-card warn">
       <div class="insight-icon">⚠️</div>
       <div class="insight-body">
         <div class="insight-title">待关注能力</div>
-        <div class="insight-text">
-          <span class="insight-highlight">CT-头颈CTA</span> 未解决率 <span class="insight-highlight">60%</span>（6/10），主因"辅诊用时较长"。<span class="insight-highlight">CT-脑灌注CTP</span> 无需解决 6 条均因未传 CTP 序列。
-        </div>
+        <div class="insight-text" id="insight-warn-text"></div>
       </div>
     </div>
     <div class="insight-card danger">
       <div class="insight-icon">🔴</div>
       <div class="insight-body">
         <div class="insight-title">核心问题根因</div>
-        <div class="insight-text">
-          <span class="insight-highlight">BodyPartExamined 过滤</span>是脑出血 / ASPECT 评分主要根因，已批量修复。<span class="insight-highlight">tag 值缺失</span>导致冠脉 CTA / 肺炎多次识别错误，需完善预处理。
-        </div>
+        <div class="insight-text" id="insight-danger-text"></div>
       </div>
     </div>
   </div>
@@ -728,7 +722,6 @@
             <th>辅诊用时</th>
             <th>状态</th>
             <th>提出人</th>
-            <th>优先级</th>
             <th>发现时间</th>
             <th>解决时间</th>
             <th>问题描述</th>
@@ -1056,8 +1049,11 @@ function buildStackedBar(records) {
         },
         yDur: {
           position: 'right',
+          min: 0,
+          max: 30,
           grid: { display:false },
           ticks: {
+            stepSize: 10,
             font: { size:11 },
             callback: v => v + ' 分'
           },
@@ -1162,9 +1158,13 @@ function buildIssueDetail(data) {
   }
   abilityListEl.innerHTML = abilities.map(ab => {
     const cnt = data.filter(r => r.ability === ab).length;
+    const hasUnresolved = data.some(r => r.ability === ab && r.status === '未解决');
+    const unresolvedIcon = hasUnresolved
+      ? '<span title="存在未解决问题" style="font-size:11px;font-weight:700;color:#f97316;flex-shrink:0;line-height:1">!</span>'
+      : '';
     return '<div class="issue-ability-item" data-ab="' + ab + '" onclick="issueSelectAbility(this.dataset.ab)">'
       + '<span>' + ab + '</span>'
-      + '<span class="issue-ability-badge">' + cnt + '</span>'
+      + '<span style="display:flex;align-items:center;gap:5px;flex-shrink:0">' + unresolvedIcon + '<span class="issue-ability-badge">' + cnt + '</span></span>'
       + '</div>';
   }).join('');
   window.issueSelectAbility = ab => renderDetail(ab);
@@ -1278,6 +1278,116 @@ function renderConclusion(records) {
   });
 }
 
+// ════════ INSIGHTS ════════
+function renderInsights(records, issueData) {
+  const abStats = {};
+  for (const ab of ABILITIES_ORDER) {
+    const recs = records.filter(r => r.ability === ab);
+    if (!recs.length) continue;
+    const resolved   = recs.filter(r => r.status === '已解决').length;
+    const noNeed     = recs.filter(r => r.status === '无需解决').length;
+    const unresolved = recs.filter(r => r.status === '未解决').length;
+    const processing = recs.filter(r => r.status === '解决中').length;
+    const cantSolve  = recs.filter(r => r.status === '无法解决').length;
+    const rate = Math.round((resolved + noNeed) / recs.length * 100);
+    abStats[ab] = { total: recs.length, resolved, noNeed, unresolved, processing, cantSolve, rate };
+  }
+
+  const hi = s => `<span class="insight-highlight">${s}</span>`;
+
+  // ── 卡片1：高效解决能力 ──
+  const perfect  = ABILITIES_ORDER.filter(ab => abStats[ab] && abStats[ab].rate === 100 && abStats[ab].unresolved === 0 && abStats[ab].processing === 0);
+  const highPerf = ABILITIES_ORDER.filter(ab => abStats[ab] && abStats[ab].rate >= 80 && !perfect.includes(ab))
+                     .sort((a, b) => abStats[b].rate - abStats[a].rate);
+  let okText;
+  if (perfect.length > 0) {
+    const top = perfect[0];
+    okText = `${hi(top)} 全部 ${abStats[top].total} 条均已解决，解决率 ${hi('100%')}。`;
+    if (highPerf.length > 0) {
+      const s = highPerf[0];
+      okText += `${hi(s)} 解决率 ${hi(abStats[s].rate + '%')}，整体响应迅速。`;
+    }
+  } else if (highPerf.length > 0) {
+    const top = highPerf[0];
+    okText = `${hi(top)} 解决率 ${hi(abStats[top].rate + '%')}，当前表现最佳。`;
+  } else {
+    okText = '各能力解决进度仍在推进，暂无完全解决的能力。';
+  }
+
+  // ── 卡片2：待关注能力 ──
+  const withUnresolved = ABILITIES_ORDER
+    .filter(ab => abStats[ab] && abStats[ab].unresolved > 0)
+    .sort((a, b) => (abStats[b].unresolved / abStats[b].total) - (abStats[a].unresolved / abStats[a].total));
+
+  const findMainIssue = (ab, status) => {
+    const items = issueData.filter(r => r.ability === ab && r.status === status);
+    return ISSUE_KEYWORDS.find(kw => items.some(r => kw.keys.some(k => (r.issue || '').includes(k))));
+  };
+
+  let warnText;
+  if (withUnresolved.length > 0) {
+    const top = withUnresolved[0];
+    const st  = abStats[top];
+    const pct = Math.round(st.unresolved / st.total * 100);
+    warnText  = `${hi(top)} 未解决率 ${hi(pct + '%')}（${st.unresolved}/${st.total}）`;
+    const kw  = findMainIssue(top, '未解决');
+    if (kw) warnText += `，主因"${hi(kw.name)}"`;
+    warnText += '。';
+
+    if (withUnresolved.length > 1) {
+      const s2   = withUnresolved[1];
+      const st2  = abStats[s2];
+      const pct2 = Math.round(st2.unresolved / st2.total * 100);
+      warnText  += `${hi(s2)} 未解决率 ${hi(pct2 + '%')}（${st2.unresolved}/${st2.total}）`;
+      const kw2  = findMainIssue(s2, '未解决');
+      if (kw2) warnText += `，主因"${hi(kw2.name)}"`;
+      warnText += '。';
+    }
+
+    // 补充无需解决的说明
+    const highNoNeed = ABILITIES_ORDER
+      .filter(ab => abStats[ab] && abStats[ab].noNeed >= 3 && abStats[ab].unresolved === 0)
+      .sort((a, b) => abStats[b].noNeed - abStats[a].noNeed);
+    if (highNoNeed.length > 0) {
+      const nb  = highNoNeed[0];
+      const kwNN = findMainIssue(nb, '');
+      const noNeedRecs = records.filter(r => r.ability === nb && r.status === '无需解决');
+      const mainKwNN   = ISSUE_KEYWORDS.find(kw => noNeedRecs.some(r => kw.keys.some(k => (r.issue || '').includes(k))));
+      warnText += `${hi(nb)} 无需解决 ${abStats[nb].noNeed} 条`;
+      if (mainKwNN) warnText += `，均因"${mainKwNN.name}"`;
+      warnText += '。';
+    }
+  } else {
+    const withProcessing = ABILITIES_ORDER.filter(ab => abStats[ab] && abStats[ab].processing > 0);
+    if (withProcessing.length > 0) {
+      const top = withProcessing[0];
+      warnText = `${hi(top)} 仍有 ${abStats[top].processing} 条处于解决中，建议持续跟进。`;
+    } else {
+      warnText = '当前无未解决问题，整体解决进度良好。';
+    }
+  }
+
+  // ── 卡片3：核心问题根因 ──
+  const kwCounts = ISSUE_KEYWORDS.map(kw => ({
+    name: kw.name,
+    count: issueData.filter(r => r.status === '未解决' && kw.keys.some(k => (r.issue || '').includes(k))).length
+  })).filter(k => k.count > 0).sort((a, b) => b.count - a.count);
+
+  let dangerText;
+  if (kwCounts.length >= 2) {
+    dangerText = `${hi(kwCounts[0].name)}（${kwCounts[0].count} 条）是当前首要未解决根因，${hi(kwCounts[1].name)}（${kwCounts[1].count} 条）亦需关注，建议优先排查处理。`;
+  } else if (kwCounts.length === 1) {
+    dangerText = `${hi(kwCounts[0].name)} 是当前主要未解决根因（${kwCounts[0].count} 条），建议优先排查处理。`;
+  } else {
+    dangerText = '当前未解决问题中暂无高频根因，整体状况良好。';
+  }
+
+  const setText = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  setText('insight-ok-text',     okText);
+  setText('insight-warn-text',   warnText);
+  setText('insight-danger-text', dangerText);
+}
+
 // ════════ DASHBOARD REFRESH ════════
 function refreshDashboard(records) {
   RAW_DATA = records;
@@ -1300,6 +1410,7 @@ function refreshDashboard(records) {
   });
   document.getElementById('searchInput').value='';
   renderTable();
+  renderInsights(records, ISSUE_DATA);
   renderConclusion(records);
 }
 
@@ -1352,7 +1463,6 @@ function renderTable() {
       <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text3);font-size:11px">${r.duration||'-'}</td>
       <td>${getBadge(r.status)}</td>
       <td style="white-space:nowrap;font-weight:500">${r.proposer||'-'}</td>
-      <td>${r.priority?`<span class="badge badge-high">${r.priority}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
       <td style="white-space:nowrap;font-size:11.5px;color:var(--text2)">${r.found_date||'-'}</td>
       <td style="white-space:nowrap;font-size:11.5px;color:var(--text2)">${r.resolve_date||'-'}</td>
       <td class="td-issue" title="${r.issue}">${r.issue||'<span style="color:var(--text3)">—</span>'}</td>
@@ -1517,7 +1627,6 @@ function parseExcel(file) {
           prop:  idx('提出人'),
           stat:  idx('解决状态'),
           res:   idx('解决人'),
-          pri:   idx('优先级'),
           fd:    idx('发现时间'),
           rd:    idx('解决时间'),
           note:  idx('备注'),
@@ -1548,7 +1657,6 @@ function parseExcel(file) {
             proposer:      get(col.prop),
             status:        get(col.stat),
             resolver:      get(col.res),
-            priority:      get(col.pri),
             found_date:    getDate(col.fd),
             resolve_date:  getDate(col.rd),
             note:          get(col.note),
