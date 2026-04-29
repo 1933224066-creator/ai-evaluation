@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
   :root {
     --bg: #eef2f9;
@@ -459,6 +460,9 @@
   .modal-box { background: #fff; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); width: 680px; max-width: 94vw; max-height: 82vh; overflow-y: auto; padding: 28px 28px 24px; position: relative; }
   .modal-close { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; border-radius: 4px; border: none; background: var(--border); color: var(--text2); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .modal-close:hover { background: var(--gray-ring); }
+  .modal-export { position: absolute; top: 14px; right: 50px; height: 28px; padding: 0 10px; border-radius: 4px; border: 1px solid var(--border); background: #fff; color: var(--text2); font-size: 12px; font-family: inherit; cursor: pointer; display: flex; align-items: center; gap: 5px; white-space: nowrap; transition: background 0.12s, border-color 0.12s; }
+  .modal-export:hover { background: var(--blue-light); border-color: var(--accent); color: var(--accent); }
+  .modal-export.loading { opacity: 0.6; pointer-events: none; }
   .modal-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
   .modal-date { font-size: 12px; color: var(--text3); margin-bottom: 20px; }
   .modal-section { margin-bottom: 18px; }
@@ -485,11 +489,36 @@
   .issue-detail-text { flex:1; color:var(--text); font-size:12.5px; line-height:1.6; }
   .issue-detail-status { flex-shrink:0; font-size:11px; padding:2px 8px; border-radius:3px; margin-top:1px; white-space:nowrap; font-weight:500; }
 
+  /* ── Restore toast ── */
+  .restore-toast {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-6px);
+    background: #0d2a4a;
+    color: rgba(255,255,255,0.92);
+    padding: 7px 18px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 9999;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.22);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    white-space: nowrap;
+  }
+  .restore-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
 </head>
 <body>
+
+<div class="restore-toast" id="restoreToast"></div>
 
 <div class="header">
   <div class="header-left">
@@ -766,47 +795,39 @@
 <div class="modal-overlay" id="conclusionModal">
   <div class="modal-box">
     <button class="modal-close" id="conclusionClose">✕</button>
-    <div class="modal-title">AI辅诊能力评估结论</div>
-    <div class="modal-date">评估时间：2026年4月 &nbsp;|&nbsp; 共评估 9 项能力，92 条病例记录</div>
+    <button class="modal-export" id="conclusionExport" onclick="exportConclusion()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2v8M5 7l3 3 3-3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1"/></svg>
+      导出图片
+    </button>
+    <div id="conclusion-content">
+      <div class="modal-title">AI辅诊能力评估结论</div>
+      <div class="modal-date" id="conclusion-date">评估时间：2026年4月 &nbsp;|&nbsp; 共评估 9 项能力，92 条病例记录</div>
 
-    <div class="modal-section">
-      <div class="modal-section-title green">✅ 建议上线（3项）</div>
-      <table class="modal-table">
-        <thead><tr><th>能力</th><th>解决率</th><th>平均辅诊用时</th><th>说明</th></tr></thead>
-        <tbody>
-          <tr><td>CT肺结节</td><td>100%</td><td>5.5 分钟</td><td>问题全部解决，用时正常</td></tr>
-          <tr><td>CT肋骨骨折</td><td>90%</td><td>3.7 分钟</td><td>1条未解决，用时短，整体稳定</td></tr>
-          <tr><td>CT-门控钙化积分</td><td>80%</td><td>2.3 分钟</td><td>1条无法解决属技术限制，主体功能正常</td></tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="modal-section" id="conclusion-section-ok">
+        <div class="modal-section-title green" id="conclusion-ok-title">✅ 建议上线（3项）</div>
+        <table class="modal-table">
+          <thead><tr><th>能力</th><th>解决率</th><th>平均辅诊用时</th><th>说明</th></tr></thead>
+          <tbody id="conclusion-ok-body"></tbody>
+        </table>
+      </div>
 
-    <div class="modal-section">
-      <div class="modal-section-title orange">⚠️ 条件上线 / 整改后上线（3项）</div>
-      <table class="modal-table">
-        <thead><tr><th>能力</th><th>解决率</th><th>平均辅诊用时</th><th>说明</th></tr></thead>
-        <tbody>
-          <tr><td>CT-肺炎</td><td>90%</td><td>4.7 分钟</td><td>1条仍解决中，跟进后可上线</td></tr>
-          <tr><td>CT-冠脉CTA</td><td>70%</td><td>3.6 分钟</td><td>2条解决中、1条无法解决，需确认影响范围</td></tr>
-          <tr><td>CT-ASPECT评分</td><td>70%</td><td>42.2 分钟</td><td>解决率尚可，但用时过长，需优化推理速度</td></tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="modal-section" id="conclusion-section-warn">
+        <div class="modal-section-title orange" id="conclusion-warn-title">⚠️ 条件上线 / 整改后上线（3项）</div>
+        <table class="modal-table">
+          <thead><tr><th>能力</th><th>解决率</th><th>平均辅诊用时</th><th>说明</th></tr></thead>
+          <tbody id="conclusion-warn-body"></tbody>
+        </table>
+      </div>
 
-    <div class="modal-section">
-      <div class="modal-section-title red">❌ 暂不建议上线（3项）</div>
-      <table class="modal-table">
-        <thead><tr><th>能力</th><th>解决率</th><th>平均辅诊用时</th><th>说明</th></tr></thead>
-        <tbody>
-          <tr><td>CT-头颈CTA</td><td>30%</td><td>5.2 分钟</td><td>7/10条未解决，问题大面积存在，风险最高</td></tr>
-          <tr><td>CT-脑出血</td><td>60%</td><td>91.8 分钟</td><td>4条未解决 + 平均用时接近1.5小时，严重超时</td></tr>
-          <tr><td>CT-脑灌注CTP</td><td>67%</td><td>5.4 分钟</td><td>4条未解决，整体稳定性不足</td></tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="modal-section" id="conclusion-section-danger">
+        <div class="modal-section-title red" id="conclusion-danger-title">❌ 暂不建议上线（3项）</div>
+        <table class="modal-table">
+          <thead><tr><th>能力</th><th>解决率</th><th>平均辅诊用时</th><th>说明</th></tr></thead>
+          <tbody id="conclusion-danger-body"></tbody>
+        </table>
+      </div>
 
-    <div class="modal-note">
-      <strong>核心问题：</strong>CT-头颈CTA问题解决率仅30%；CT-脑出血和CT-ASPECT评分辅诊用时远超其他能力（42～92分钟 vs 正常5分钟左右）。建议重点排查这三项能力的性能瓶颈后再评估上线。
+      <div class="modal-note" id="conclusion-note"></div>
     </div>
   </div>
 </div>
@@ -854,7 +875,7 @@ function computeStats(records) {
   const processing = records.filter(r => r.status === '解决中').length;
   const unresolved = records.filter(r => r.status === '未解决').length;
   const cantSolve  = records.filter(r => r.status === '无法解决').length;
-  const effective  = issueCount - noNeed > 0 ? Math.round(resolved / (issueCount - noNeed) * 100) : 0;
+  const effective  = (resolved + unresolved) > 0 ? Math.round(resolved / (resolved + unresolved) * 100) : 0;
   return { total, issueCount, resolved, noNeed, processing, unresolved, cantSolve, effective };
 }
 
@@ -928,7 +949,7 @@ function updateKPIs(s) {
   setKPI('kpi-pending', s.unresolved + s.processing);
   setKPI('kpi-rate', s.effective + '%');
   setEl('kpi-sub-pending', `未解决 ${s.unresolved} · 解决中 ${s.processing}`);
-  setEl('kpi-sub-rate', `${s.resolved} ÷ (${s.issueCount} − ${s.noNeed}) ≈ ${s.effective}%`);
+  setEl('kpi-sub-rate', `${s.resolved} ÷ (${s.resolved} + ${s.unresolved}) ≈ ${s.effective}%`);
   // bars
   setBar('bar-resolved', s.issueCount ? s.resolved/s.issueCount*100 : 0);
   setBar('bar-noneed',   s.issueCount ? s.noNeed/s.issueCount*100 : 0);
@@ -1151,6 +1172,112 @@ function buildIssueDetail(data) {
 }
 
 
+// ════════ CONCLUSION ════════
+function renderConclusion(records) {
+  const now = new Date();
+  const avgDurs = computeAvgDuration(records);
+
+  const abilities = ABILITIES_ORDER.map(ab => {
+    const recs = records.filter(r => r.ability === ab);
+    const total = recs.length;
+    if (!total) return null;
+    const resolved   = recs.filter(r => r.status === '已解决').length;
+    const noNeed     = recs.filter(r => r.status === '无需解决').length;
+    const processing = recs.filter(r => r.status === '解决中').length;
+    const unresolved = recs.filter(r => r.status === '未解决').length;
+    const cantSolve  = recs.filter(r => r.status === '无法解决').length;
+    const effective  = total - noNeed;
+    const rate = Math.round((resolved + noNeed) / total * 100);
+    const avgDur = avgDurs[ab];
+    return { ab, total, resolved, noNeed, processing, unresolved, cantSolve, effective, rate, avgDur };
+  }).filter(Boolean);
+
+  function classify(a) {
+    if (a.rate < 50) return 'danger';
+    if (a.avgDur !== null && a.avgDur > 3600) return 'danger';
+    if (a.rate < 70 && a.effective > 0 && a.unresolved / a.effective > 0.5) return 'danger';
+    if (a.rate >= 80 && (a.avgDur === null || a.avgDur <= 900) && a.processing === 0) return 'ok';
+    return 'warn';
+  }
+
+  function fmtMin(secs) {
+    if (secs === null) return '暂无';
+    const m = secs / 60;
+    return m < 120 ? m.toFixed(1) + ' 分钟' : (m / 60).toFixed(1) + ' 小时';
+  }
+
+  function genNote(a) {
+    const cat = classify(a);
+    const parts = [];
+    if (a.unresolved > 0) parts.push(a.unresolved + '条未解决');
+    if (a.processing > 0) parts.push(a.processing + '条解决中');
+    if (a.cantSolve > 0) parts.push(a.cantSolve + '条无法解决（技术限制）');
+    const durIssue = a.avgDur !== null && a.avgDur > 3600 ? '辅诊用时严重超时'
+                   : a.avgDur !== null && a.avgDur > 1800 ? '辅诊用时偏长' : null;
+    if (parts.length === 0 && !durIssue)
+      return a.rate === 100 ? '问题全部解决，用时正常' : '整体稳定，用时正常';
+    const all = durIssue ? [...parts, durIssue] : [...parts];
+    if (cat === 'ok') return all.join('，') + '，整体可上线';
+    if (cat === 'warn') {
+      if (a.processing > 0 && a.unresolved === 0 && a.cantSolve === 0 && !durIssue)
+        return all.join('，') + '，跟进后可上线';
+      if (durIssue && parts.length === 0) return all.join('，') + '，需优化推理速度';
+      return all.join('，') + (durIssue ? '，需重点排查' : '');
+    }
+    return all.join('，') + (durIssue && a.unresolved === 0 ? '，严重影响使用' : '，风险较高');
+  }
+
+  function buildRows(list) {
+    if (!list.length) return '<tr><td colspan="4" style="color:var(--text3);text-align:center">暂无</td></tr>';
+    return list.map(a =>
+      `<tr><td>${a.ab}</td><td>${a.rate}%</td><td>${fmtMin(a.avgDur)}</td><td>${genNote(a)}</td></tr>`
+    ).join('');
+  }
+
+  const ok     = abilities.filter(a => classify(a) === 'ok');
+  const warn   = abilities.filter(a => classify(a) === 'warn');
+  const danger = abilities.filter(a => classify(a) === 'danger');
+
+  const noteItems = [];
+  danger.forEach(a => {
+    if (a.rate < 50) noteItems.push(a.ab + '问题解决率仅' + a.rate + '%');
+    else if (a.avgDur !== null && a.avgDur > 3600) noteItems.push(a.ab + '辅诊用时达' + fmtMin(a.avgDur));
+    else noteItems.push(a.ab + '未解决率偏高（' + a.unresolved + '/' + a.effective + '条）');
+  });
+  warn.filter(a => a.avgDur !== null && a.avgDur > 1800).forEach(a => {
+    noteItems.push(a.ab + '辅诊用时偏长（' + fmtMin(a.avgDur) + '）');
+  });
+
+  let noteHTML;
+  if (noteItems.length === 0) {
+    noteHTML = warn.length > 0
+      ? '当前无高风险能力，建议跟进条件上线项目的遗留问题后逐步推进上线。'
+      : '所有能力运行稳定，建议按计划推进上线。';
+  } else {
+    const dangerNames = danger.map(a => a.ab).join('、');
+    const tail = dangerNames
+      ? '建议重点排查' + dangerNames + '的性能瓶颈后再评估上线。'
+      : '建议优先处理上述问题后再评估上线。';
+    noteHTML = '<strong>核心问题：</strong>' + noteItems.join('；') + '。' + tail;
+  }
+
+  const gel = id => document.getElementById(id);
+  gel('conclusion-date').textContent = '评估时间：' + now.getFullYear() + '年' + (now.getMonth() + 1) + '月'
+    + ' | 共评估 ' + abilities.length + ' 项能力，' + records.length + ' 条病例记录';
+  gel('conclusion-ok-title').textContent = '✅ 建议上线（' + ok.length + '项）';
+  gel('conclusion-ok-body').innerHTML = buildRows(ok);
+  gel('conclusion-warn-title').textContent = '⚠️ 条件上线 / 整改后上线（' + warn.length + '项）';
+  gel('conclusion-warn-body').innerHTML = buildRows(warn);
+  gel('conclusion-danger-title').textContent = '❌ 暂不建议上线（' + danger.length + '项）';
+  gel('conclusion-danger-body').innerHTML = buildRows(danger);
+  gel('conclusion-note').innerHTML = noteHTML;
+  ['ok', 'warn', 'danger'].forEach(type => {
+    const sec = gel('conclusion-section-' + type);
+    const list = type === 'ok' ? ok : type === 'warn' ? warn : danger;
+    if (sec) sec.style.display = list.length === 0 ? 'none' : '';
+  });
+}
+
 // ════════ DASHBOARD REFRESH ════════
 function refreshDashboard(records) {
   RAW_DATA = records;
@@ -1173,6 +1300,7 @@ function refreshDashboard(records) {
   });
   document.getElementById('searchInput').value='';
   renderTable();
+  renderConclusion(records);
 }
 
 // ════════ TABLE ════════
@@ -1180,7 +1308,27 @@ let filteredData = [...RAW_DATA];
 let currentPage = 1;
 const PAGE_SIZE = 15;
 
-// initial render
+// initial render — restore last uploaded data if available
+(function restoreFromStorage() {
+  try {
+    const savedRecords = localStorage.getItem('aisaas_records');
+    const savedIssues  = localStorage.getItem('aisaas_issues');
+    const savedTime    = localStorage.getItem('aisaas_saved_time');
+    if (savedRecords) RAW_DATA   = JSON.parse(savedRecords);
+    if (savedIssues)  ISSUE_DATA = JSON.parse(savedIssues);
+    if (savedRecords || savedIssues) {
+      const toast = document.getElementById('restoreToast');
+      if (toast) {
+        const timeStr = savedTime
+          ? new Date(+savedTime).toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
+          : '';
+        toast.textContent = '已恢复上次上传的数据' + (timeStr ? '（' + timeStr + '）' : '');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+      }
+    }
+  } catch(e) {}
+})();
 refreshDashboard(RAW_DATA);
 
 function getBadge(status) {
@@ -1376,7 +1524,7 @@ function parseExcel(file) {
         };
 
         const records = [];
-        for(let i=hdrIdx+1;i<rows.length;i++) {
+        for(let i=hdrIdx+3;i<rows.length;i++) {
           const r = rows[i];
           if(!r.some(c=>c!=='' && c!==null && c!==undefined)) continue;
           const get = (c,fallback='') => c>=0 && r[c]!==undefined ? String(r[c]).trim() : fallback;
@@ -1449,8 +1597,8 @@ function parseIssueExcel(file) {
         const hdrs = rows[hdr].map(c => String(c).trim());
         const ci = name => hdrs.findIndex(h => h.includes(name));
         const iSeq = Math.max(ci('\u5e8f\u53f7'), 0);
-        const iAb = ci('\u80fd\u529b'), iIss = ci('\u95ee\u9898\u63cf\u8ff0'), iStat = ci('\u89e3\u51b3\u72b6\u6001');
-        if (iAb < 0 || iIss < 0) { reject(new Error(file.name + '\uff1a\u7f3a\u5c11\u201c\u80fd\u529b\u201d\u6216\u201c\u95ee\u9898\u63cf\u8ff0\u201d\u5217')); return; }
+        const iAb = ci('\u80fd\u529b'), iIss = ci('\u95ee\u9898'), iStat = ci('\u89e3\u51b3\u72b6\u6001');
+        if (iAb < 0 || iIss < 0) { reject(new Error(file.name + '\uff1a\u7f3a\u5c11\u201c\u80fd\u529b\u201d\u6216\u201c\u95ee\u9898\u201d\u5217')); return; }
         const data = [];
         for (let i = hdr+1; i < rows.length; i++) {
           const r = rows[i];
@@ -1463,9 +1611,6 @@ function parseIssueExcel(file) {
           });
         }
         if (!data.length) { reject(new Error(file.name + '\uff1a\u672a\u89e3\u6790\u5230\u6570\u636e')); return; }
-        ISSUE_DATA = data;
-        buildIssueDetail(ISSUE_DATA);
-        showMsg('\u2705 \u4e3b\u8981\u95ee\u9898\u7c7b\u578b\u5df2\u66f4\u65b0\uff0c\u5171 ' + data.length + ' \u6761', 'success');
         resolve(data);
       } catch(err) { reject(new Error(file.name + '\uff1a\u89e3\u6790\u5931\u8d25 \u2014 ' + err.message)); }
     };
@@ -1485,12 +1630,13 @@ parseBtn.addEventListener('click', async () => {
 
   try {
     let allRecords = [];
+    let issueRecords = [];
     const errors = [];
     let issueFileHandled = false;
 
     for(const f of excelFiles) {
-      if (f.name.includes('\u4e3b\u8981\u95ee\u9898\u7c7b\u578b')) {
-        try { await parseIssueExcel(f); issueFileHandled = true; }
+      if (f.name.includes('\u6d4b\u8bd5\u95ee\u9898\u6c47\u603b')) {
+        try { const r = await parseIssueExcel(f); issueRecords = issueRecords.concat(r); issueFileHandled = true; }
         catch(e) { errors.push(e.message); }
         continue;
       }
@@ -1506,12 +1652,24 @@ parseBtn.addEventListener('click', async () => {
       throw new Error(errors.join(' | ') || '未解析到任何有效数据');
     }
 
-    if(allRecords.length>0) {
-      refreshDashboard(allRecords);
-      const msg = `✅ 成功载入 ${allRecords.length} 条记录` + (errors.length ? `，${errors.length} 个文件有警告` : '');
-      showMsg(msg, 'success');
+    if(issueRecords.length > 0) {
+      ISSUE_DATA = issueRecords;
+      buildIssueDetail(ISSUE_DATA);
+      try { localStorage.setItem('aisaas_issues', JSON.stringify(ISSUE_DATA)); } catch(e) {}
     }
-    if(errors.length && !allRecords.length) showMsg(errors.join('；'), 'error');
+    if(allRecords.length > 0) {
+      refreshDashboard(allRecords);
+      try {
+        localStorage.setItem('aisaas_records', JSON.stringify(allRecords));
+        localStorage.setItem('aisaas_saved_time', Date.now().toString());
+      } catch(e) {}
+    }
+
+    const parts = [];
+    if(allRecords.length > 0) parts.push(`成功载入 ${allRecords.length} 条记录`);
+    if(issueRecords.length > 0) parts.push(`主要问题类型已更新，共 ${issueRecords.length} 条`);
+    if(parts.length) showMsg('✅ ' + parts.join('；') + (errors.length ? `，${errors.length} 个文件有警告` : ''), 'success');
+    if(errors.length && !allRecords.length && !issueRecords.length) showMsg(errors.join('；'), 'error');
     else if(errors.length) showMsg('部分文件警告：' + errors.join('；'), 'error');
 
     pendingFiles = []; renderFileList(); fileInput.value='';
@@ -1522,6 +1680,44 @@ parseBtn.addEventListener('click', async () => {
     parseBtn.innerHTML = '开始解析';
   }
 });
+
+renderConclusion(RAW_DATA);
+
+async function exportConclusion() {
+  const btn = document.getElementById('conclusionExport');
+  const content = document.getElementById('conclusion-content');
+  const box = content.closest('.modal-box');
+  btn.classList.add('loading');
+  btn.textContent = '导出中…';
+  const origMaxHeight = box.style.maxHeight;
+  const origOverflow  = box.style.overflowY;
+  box.style.maxHeight = 'none';
+  box.style.overflowY = 'visible';
+  try {
+    const canvas = await html2canvas(content, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      onclone: doc => {
+        doc.getElementById('conclusion-content').style.padding = '28px';
+      }
+    });
+    const link = document.createElement('a');
+    const now = new Date();
+    link.download = 'AI辅诊能力评估结论_' + now.getFullYear()
+      + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '.jpg';
+    link.href = canvas.toDataURL('image/jpeg', 0.95);
+    link.click();
+  } catch(e) {
+    alert('导出失败：' + e.message);
+  } finally {
+    box.style.maxHeight = origMaxHeight;
+    box.style.overflowY  = origOverflow;
+    btn.classList.remove('loading');
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2v8M5 7l3 3 3-3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1"/></svg> 导出图片';
+  }
+}
 
 function switchTab(name) {
   document.querySelectorAll('.header-tab').forEach(t => t.classList.remove('active'));
