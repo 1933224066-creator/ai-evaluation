@@ -735,7 +735,6 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>#</th>
             <th>序号</th>
             <th>能力</th>
             <th>原始编码</th>
@@ -1476,7 +1475,6 @@ function renderTable() {
   const pageData = filteredData.slice(start, start+PAGE_SIZE);
   tbody.innerHTML = pageData.map((r,i) => `
     <tr>
-      <td style="color:var(--text3);font-size:11px">${start+i+1}</td>
       <td style="color:var(--text3);font-size:11px">${r.seq||'-'}</td>
       <td class="td-ability"><span class="ability-pill">${r.ability}</span></td>
       <td><span class="td-code">${r.orig_code||'-'}</span></td>
