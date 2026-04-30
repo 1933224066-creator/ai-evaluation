@@ -1441,27 +1441,8 @@ let filteredData = [...RAW_DATA];
 let currentPage = 1;
 const PAGE_SIZE = 15;
 
-// initial render — restore last uploaded data if available
-(function restoreFromStorage() {
-  try {
-    const savedRecords = localStorage.getItem('aisaas_records');
-    const savedIssues  = localStorage.getItem('aisaas_issues');
-    const savedTime    = localStorage.getItem('aisaas_saved_time');
-    if (savedRecords) RAW_DATA   = JSON.parse(savedRecords);
-    if (savedIssues)  ISSUE_DATA = JSON.parse(savedIssues);
-    if (savedRecords || savedIssues) {
-      const toast = document.getElementById('restoreToast');
-      if (toast) {
-        const timeStr = savedTime
-          ? new Date(+savedTime).toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
-          : '';
-        toast.textContent = '已恢复上次上传的数据' + (timeStr ? '（' + timeStr + '）' : '');
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3500);
-      }
-    }
-  } catch(e) {}
-})();
+// clear any stale localStorage so embedded data always takes effect
+try { localStorage.removeItem('aisaas_records'); localStorage.removeItem('aisaas_issues'); localStorage.removeItem('aisaas_saved_time'); } catch(e) {}
 refreshDashboard(RAW_DATA);
 
 function getBadge(status) {
@@ -1784,14 +1765,9 @@ parseBtn.addEventListener('click', async () => {
     if(issueRecords.length > 0) {
       ISSUE_DATA = issueRecords;
       buildIssueDetail(ISSUE_DATA);
-      try { localStorage.setItem('aisaas_issues', JSON.stringify(ISSUE_DATA)); } catch(e) {}
     }
     if(allRecords.length > 0) {
       refreshDashboard(allRecords);
-      try {
-        localStorage.setItem('aisaas_records', JSON.stringify(allRecords));
-        localStorage.setItem('aisaas_saved_time', Date.now().toString());
-      } catch(e) {}
     }
 
     const parts = [];
